@@ -1,0 +1,33 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL") // 이 줄을 DIRECT_URL로 맞춰줍니다.
+}
+
+
+// prisma/schema.prisma 파일 내의 users 모델 수정
+model users {
+  id           String   @id @default(uuid())
+  email        String   @unique
+  name         String
+  role         String   @default("PENDING") // 기본값을 STUDENT에서 PENDING으로 변경
+  github_token String
+  github_email String?
+  created_at   DateTime @default(now())
+  projects     projects[]
+}
+
+model projects {
+  id         String   @id @default(uuid())
+  title      String
+  github_url String
+  user_id    String
+  created_at DateTime @default(now())
+
+  // 외래키 관계 및 연사 제약 조건(유저 삭제 시 하위 프로젝트 동시 삭제) 정의
+  user       users    @relation(fields: [user_id], references: [id], onDelete: Cascade)
+}

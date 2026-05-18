@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>TIMO Match - Onboarding</title>
+  <style>
+    body { 
+      margin: 0; 
+      font-family: 'Segoe UI', sans-serif; 
+      background-color: #F3F4F9; 
+      display: flex; 
+      justify-content: center; 
+      align-items: center; 
+      height: 100vh; 
+    }
+    .card { 
+      background: white; 
+      padding: 40px; 
+      border-radius: 28px; 
+      box-shadow: 0 4px 12px rgba(0,0,0,0.05); 
+      text-align: center; 
+      max-width: 400px; 
+      width: 100%; 
+    }
+    h2 { margin: 0 0 12px; color: #1D1B20; }
+    p { color: #49454F; margin-bottom: 32px; font-size: 14px; }
+    .btn-group { display: flex; gap: 16px; }
+    .btn { 
+      flex: 1; 
+      height: 48px; 
+      border: none; 
+      border-radius: 100px; 
+      cursor: pointer; 
+      font-weight: 600; 
+      font-size: 15px; 
+      background-color: #E8DEF8; 
+      color: #1D192B; 
+      transition: background-color 0.2s;
+    }
+    .btn:hover { background-color: #D0BCFF; }
+  </style>
+</head>
+<body>
+
+  <div class="card">
+    <h2>추가 정보 입력</h2>
+    <p>시스템 이용을 위해 회원님의 역할을 선택해 주세요.</p>
+    <div class="btn-group">
+      <button class="btn" onclick="assignRole('STUDENT')">학생으로 시작</button>
+      <button class="btn" onclick="assignRole('PROFESSOR')">교수로 시작</button>
+    </div>
+  </div>
+
+  <script>
+    // 1. URL에서 임시 토큰 추출 후 메모리에 저장
+    const urlParams = new URLSearchParams(window.location.search);
+    const temporaryToken = urlParams.get('token');
+    
+    if (temporaryToken) {
+      sessionStorage.setItem('timo_temp_token', temporaryToken);
+      // URL 파라미터 숨김 처리
+      window.history.replaceState({}, document.title, "/first-login.html");
+    }
+
+    // 2. 백엔드 역할 지정 API 호출
+    function assignRole(selectedRole) {
+      const token = sessionStorage.getItem('timo_temp_token');
+      if (!token) {
+        alert('인증 정보가 만료되었습니다. 다시 로그인해 주세요.');
+        location.href = '/';
+        return;
+      }
+
+      fetch('/api/auth/role', {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({ role: selectedRole })
+      })
+      .then(res => {
+        if (!res.ok) throw new Error('역할 저장 실패');
+        return res.json();
+      })
+      .then(data => {
+        if (data.token) {
+          // 최종 토큰 저장 후 홈 화면 이동
+          localStorage.setItem('timo_jwt', data.token);
+          sessionStorage.removeItem('timo_temp_token');
+          location.href = '/home.html';
+        }
+      })
+      .catch(err => {
+        alert('오류가 발생했습니다. 다시 시도해 주세요.');
+        console.error(err);
+      });
+    }
+  </script>
+</body>
+</html>
