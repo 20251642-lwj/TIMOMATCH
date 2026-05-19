@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <title>TIMO Match - 역할 선택</title>
+  <style>
+    body { margin: 0; font-family: sans-serif; background-color: #F3F4F9; display: flex; align-items: center; justify-content: center; height: 100vh; }
+    .container { background: white; padding: 48px; border-radius: 24px; box-shadow: 0 4px 12px rgba(0,0,0,0.05); text-align: center; max-width: 500px; }
+    h1 { color: #1D1B20; margin-top: 0; font-size: 24px; }
+    p { color: #49454F; margin-bottom: 32px; }
+    .role-grid { display: flex; gap: 16px; margin-bottom: 32px; }
+    .role-card { flex: 1; padding: 24px; border: 2px solid #EADDFF; border-radius: 16px; cursor: pointer; transition: all 0.2s; background: white; }
+    .role-card:hover { border-color: #6750A4; background: #F3EDF7; }
+    .role-card.selected { border-color: #21005D; background: #EADDFF; border-width: 2px; }
+    .role-title { font-weight: bold; font-size: 18px; color: #1D1B20; margin-bottom: 8px; }
+    .role-desc { font-size: 14px; color: #49454F; }
+    .btn-submit { background-color: #6750A4; color: white; border: none; padding: 14px 24px; border-radius: 100px; font-weight: 600; font-size: 16px; cursor: pointer; width: 100%; }
+    .btn-submit:disabled { background-color: #E0E0E0; cursor: not-allowed; color: #9E9E9E; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>환영합니다! 역할을 선택해주세요.</h1>
+    <p>시스템을 이용하기 위해 본인의 역할을 확정해야 합니다.<br>한 번 선택한 역할은 변경할 수 없습니다.</p>
+    
+    <div class="role-grid">
+      <div class="role-card" id="card-student" onclick="selectRole('STUDENT')">
+        <div class="role-title">학생 (Student)</div>
+        <div class="role-desc">과목에 참여하고<br>프로젝트를 등록합니다.</div>
+      </div>
+      <div class="role-card" id="card-prof" onclick="selectRole('PROFESSOR')">
+        <div class="role-title">교수 (Professor)</div>
+        <div class="role-desc">과목을 개설하고<br>학생들을 모니터링합니다.</div>
+      </div>
+    </div>
+
+    <button id="submitBtn" class="btn-submit" onclick="submitRole()" disabled>역할 확정 및 시작하기</button>
+  </div>
+
+  <script src="/js/first-login.js"></script>
+</body>
+</html>
