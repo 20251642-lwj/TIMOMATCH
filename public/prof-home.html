@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <title>TIMO Match - 교수 대시보드</title>
+  <style>
+    body { margin: 0; font-family: sans-serif; background-color: #F3F4F9; padding: 40px; }
+    .container { max-width: 800px; margin: 0 auto; background: white; padding: 32px; border-radius: 24px; box-shadow: 0 4px 12px rgba(0,0,0,0.05); }
+    h1 { color: #1D1B20; margin-top: 0; }
+    .btn-logout { background-color: #BA1A1A; color: white; border: none; padding: 10px 20px; border-radius: 100px; font-weight: 600; cursor: pointer; float: right; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <button class="btn-logout" onclick="handleLogout()">로그아웃</button>
+    <h1>👨‍🏫 교수 대시보드</h1>
+    <p>수강생들의 프로젝트 현황을 모니터링하고 관리할 수 있습니다.</p>
+    <hr style="border: 0; height: 1px; background: #e0e0e0; margin: 24px 0;">
+    
+    <div style="background: #F3F4F9; padding: 24px; border-radius: 16px; margin-bottom: 24px;">
+      <h3 style="margin-top: 0;">새 과목 개설</h3>
+      <div style="display: flex; flex-direction: column; gap: 12px;">
+        <input type="text" id="classNameInput" placeholder="과목 이름 (예: 소프트웨어 공학)" style="padding: 12px; border-radius: 8px; border: 1px solid #CAC4D0; font-size: 16px;">
+        <button onclick="createClass()" style="background-color: #6750A4; color: white; border: none; padding: 14px; border-radius: 8px; font-weight: 600; font-size: 16px; cursor: pointer;">
+          과목 개설 및 초대 코드 발급
+        </button>
+      </div>
+      
+      <div id="creationResult" style="margin-top: 16px; padding: 16px; border-radius: 8px; display: none;"></div>
+    </div>
+
+    <h3>내 과목 관리 (구현 예정)</h3>
+    <div id="profClassList" style="display: flex; flex-direction: column; gap: 12px;">
+      <p style="color: #49454F;">데이터를 불러오는 중...</p>
+    </div>
+  </div>
+
+  <script src="/js/prof-home.js"></script>
+</body>
+</html>

@@ -2,101 +2,41 @@
 <html lang="ko">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>TIMO Match - Onboarding</title>
+  <title>TIMO Match - 역할 선택</title>
   <style>
-    body { 
-      margin: 0; 
-      font-family: 'Segoe UI', sans-serif; 
-      background-color: #F3F4F9; 
-      display: flex; 
-      justify-content: center; 
-      align-items: center; 
-      height: 100vh; 
-    }
-    .card { 
-      background: white; 
-      padding: 40px; 
-      border-radius: 28px; 
-      box-shadow: 0 4px 12px rgba(0,0,0,0.05); 
-      text-align: center; 
-      max-width: 400px; 
-      width: 100%; 
-    }
-    h2 { margin: 0 0 12px; color: #1D1B20; }
-    p { color: #49454F; margin-bottom: 32px; font-size: 14px; }
-    .btn-group { display: flex; gap: 16px; }
-    .btn { 
-      flex: 1; 
-      height: 48px; 
-      border: none; 
-      border-radius: 100px; 
-      cursor: pointer; 
-      font-weight: 600; 
-      font-size: 15px; 
-      background-color: #E8DEF8; 
-      color: #1D192B; 
-      transition: background-color 0.2s;
-    }
-    .btn:hover { background-color: #D0BCFF; }
+    body { margin: 0; font-family: sans-serif; background-color: #F3F4F9; display: flex; align-items: center; justify-content: center; height: 100vh; }
+    .container { background: white; padding: 48px; border-radius: 24px; box-shadow: 0 4px 12px rgba(0,0,0,0.05); text-align: center; max-width: 500px; }
+    h1 { color: #1D1B20; margin-top: 0; font-size: 24px; }
+    p { color: #49454F; margin-bottom: 32px; }
+    .role-grid { display: flex; gap: 16px; margin-bottom: 32px; }
+    .role-card { flex: 1; padding: 24px; border: 2px solid #EADDFF; border-radius: 16px; cursor: pointer; transition: all 0.2s; background: white; }
+    .role-card:hover { border-color: #6750A4; background: #F3EDF7; }
+    .role-card.selected { border-color: #21005D; background: #EADDFF; border-width: 2px; }
+    .role-title { font-weight: bold; font-size: 18px; color: #1D1B20; margin-bottom: 8px; }
+    .role-desc { font-size: 14px; color: #49454F; }
+    .btn-submit { background-color: #6750A4; color: white; border: none; padding: 14px 24px; border-radius: 100px; font-weight: 600; font-size: 16px; cursor: pointer; width: 100%; }
+    .btn-submit:disabled { background-color: #E0E0E0; cursor: not-allowed; color: #9E9E9E; }
   </style>
 </head>
 <body>
-
-  <div class="card">
-    <h2>추가 정보 입력</h2>
-    <p>시스템 이용을 위해 회원님의 역할을 선택해 주세요.</p>
-    <div class="btn-group">
-      <button class="btn" onclick="assignRole('STUDENT')">학생으로 시작</button>
-      <button class="btn" onclick="assignRole('PROFESSOR')">교수로 시작</button>
+  <div class="container">
+    <h1>환영합니다! 역할을 선택해주세요.</h1>
+    <p>시스템을 이용하기 위해 본인의 역할을 확정해야 합니다.<br>한 번 선택한 역할은 변경할 수 없습니다.</p>
+    
+    <div class="role-grid">
+      <div class="role-card" id="card-student" onclick="selectRole('STUDENT')">
+        <div class="role-title">학생 (Student)</div>
+        <div class="role-desc">과목에 참여하고<br>프로젝트를 등록합니다.</div>
+      </div>
+      <div class="role-card" id="card-prof" onclick="selectRole('PROFESSOR')">
+        <div class="role-title">교수 (Professor)</div>
+        <div class="role-desc">과목을 개설하고<br>학생들을 모니터링합니다.</div>
+      </div>
     </div>
+
+    <button id="submitBtn" class="btn-submit" onclick="submitRole()" disabled>역할 확정 및 시작하기</button>
   </div>
 
-  <script>
-    // 1. URL에서 임시 토큰 추출 후 메모리에 저장
-    const urlParams = new URLSearchParams(window.location.search);
-    const temporaryToken = urlParams.get('token');
-    
-    if (temporaryToken) {
-      sessionStorage.setItem('timo_temp_token', temporaryToken);
-      // URL 파라미터 숨김 처리
-      window.history.replaceState({}, document.title, "/first-login.html");
-    }
-
-    // 2. 백엔드 역할 지정 API 호출
-    function assignRole(selectedRole) {
-      const token = sessionStorage.getItem('timo_temp_token');
-      if (!token) {
-        alert('인증 정보가 만료되었습니다. 다시 로그인해 주세요.');
-        location.href = '/';
-        return;
-      }
-
-      fetch('/api/auth/role', {
-        method: 'PATCH',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        },
-        body: JSON.stringify({ role: selectedRole })
-      })
-      .then(res => {
-        if (!res.ok) throw new Error('역할 저장 실패');
-        return res.json();
-      })
-      .then(data => {
-        if (data.token) {
-          // 최종 토큰 저장 후 홈 화면 이동
-          localStorage.setItem('timo_jwt', data.token);
-          sessionStorage.removeItem('timo_temp_token');
-          location.href = '/home.html';
-        }
-      })
-      .catch(err => {
-        alert('오류가 발생했습니다. 다시 시도해 주세요.');
-        console.error(err);
-      });
-    }
-  </script>
+  <script src="/js/first-login.js"></script>
 </body>
 </html>

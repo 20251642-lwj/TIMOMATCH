@@ -77,11 +77,13 @@ exports.handleGitHubCallback = async (req, res) => {
       { expiresIn: '1h' } 
     );
 
-    // 4. 상태(Role)별 라우팅 통제
+    // 4. 상태(Role)별 라우팅 통제 [이 부분을 수정합니다]
     if (savedUser.role === 'PENDING') {
       res.redirect(`/first-login.html?token=${jwtToken}`);
-    } else {
-      res.redirect(`/home.html?token=${jwtToken}`);
+    } else if (savedUser.role === 'PROFESSOR') {
+      res.redirect(`/prof-home.html?token=${jwtToken}`);
+    } else if (savedUser.role === 'STUDENT') {
+      res.redirect(`/student-home.html?token=${jwtToken}`);
     }
 
   } catch (error) {
