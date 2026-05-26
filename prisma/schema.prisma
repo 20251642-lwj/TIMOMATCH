@@ -5,29 +5,61 @@ generator client {
 datasource db {
   provider  = "postgresql"
   url       = env("DATABASE_URL")
-  directUrl = env("DIRECT_URL") // 이 줄을 DIRECT_URL로 맞춰줍니다.
+  directUrl = env("DIRECT_URL")
 }
 
-
-// prisma/schema.prisma 파일 내의 users 모델 수정
-model users {
-  id           String    @id @default(uuid())
-  email        String    @unique
-  name         String
-  role         String    @default("PENDING") // PENDING, STUDENT, PROFESSOR
-  github_token String
-  github_email String?
-  created_at   DateTime  @default(now())
+model universities {
+  id                 String               @id @default(uuid())
+  name               String               @unique
+  created_at         DateTime             @default(now())
   
-  // [관계 필드 1] 학생 관점: 내가 수강 중인 '여러' 과목들 (N:M 다대다)
-  // Prisma가 자동으로 _ClassEnrollments 라는 숨겨진 연결 테이블을 생성해 줍니다.
-  enrolled_classes classes[] @relation("ClassEnrollments")
+  student_profiles   student_profiles[]
+  professor_profiles professor_profiles[]
+}
 
-  // [관계 필드 2] 교수 관점: 내가 개설하고 관리하는 '여러' 과목들 (1:N 일대다)
-  managed_classes  classes[] @relation("ProfessorToClasses")
+model users {
+  id           String   @id @default(uuid())
+  github_id    String   @unique
+  name         String   
+  github_token String
+  role         String   @default("PENDING") 
+  created_at   DateTime @default(now())
 
-  // 기존 프로젝트 유지 (1:N)
-  projects         projects[]
+  student_profile   student_profiles?
+  professor_profile professor_profiles?
+  
+  // [복구됨] 첫 번째 오류 해결: 이 유저가 생성한 프로젝트 목록 (1:N)
+  projects          projects[]
+}
+
+model student_profiles {
+  id             String       @id @default(uuid())
+  user_id        String       @unique
+  university_id  String
+  real_name      String       
+  student_number String       
+  tech_stack     String[]
+  created_at     DateTime     @default(now())
+
+  user       users        @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  university universities @relation(fields: [university_id], references: [id], onDelete: Restrict)
+
+  // [복구됨] 두 번째 오류 해결: 이 학생이 수강 중인 과목 목록 다대다(N:M) 연결
+  enrolled_classes classes[]  @relation("ClassEnrollments")
+
+  @@unique([university_id, student_number])
+}
+
+model professor_profiles {
+  id               String       @id @default(uuid())
+  user_id          String       @unique
+  university_id    String
+  real_name        String       
+  created_at       DateTime     @default(now())
+
+  user             users        @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  university       universities @relation(fields: [university_id], references: [id], onDelete: Restrict)
+  managed_classes  classes[]    @relation("ProfessorToClasses")
 }
 
 model projects {
@@ -35,31 +67,21 @@ model projects {
   title      String
   github_url String
   user_id    String
-  
-  class_id   String?  // null 허용 (과목이 사라지면 이 값이 null로 변함)
-
+  class_id   String? 
   created_at DateTime @default(now())
 
-  // 1. 유저가 회원 탈퇴하면 프로젝트는 지워지는 게 맞습니다. (Cascade 유지)
   user       users    @relation(fields: [user_id], references: [id], onDelete: Cascade)
-  
-  // 2. [수정됨] 과목이 삭제되면 프로젝트는 살려두고 class_id만 비웁니다. (SetNull 적용)
   class      classes? @relation(fields: [class_id], references: [id], onDelete: SetNull) 
 }
 
 model classes {
-  id           String   @id @default(uuid())
-  name         String   // 과목명 (예: 컴퓨터공학개론)
-  code         String   @unique // 학생들에게 배포할 6~8자리 고유 초대 코드
-  professor_id String   // 개설한 교수 ID
-  created_at   DateTime @default(now())
+  id                   String             @id @default(uuid())
+  name                 String   
+  code                 String             @unique 
+  professor_profile_id String   
+  created_at           DateTime           @default(now())
 
-  // [역방향 관계 1] 이 과목을 개설한 단 한 명의 교수 (1:N)
-  professor    users    @relation("ProfessorToClasses", fields: [professor_id], references: [id], onDelete: Cascade)
-
-  // [역방향 관계 2] 이 과목을 듣는 '여러' 학생들 (N:M 다대다)
-  students     users[]  @relation("ClassEnrollments")
-
-  // [NEW] 이 과목에 제출된 모든 학생들의 프로젝트들 (1:N)
-  projects     projects[]
+  professor            professor_profiles @relation("ProfessorToClasses", fields: [professor_profile_id], references: [id], onDelete: Cascade)
+  students             student_profiles[] @relation("ClassEnrollments") 
+  projects             projects[]
 }

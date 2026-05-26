@@ -3,20 +3,48 @@
 <head>
   <meta charset="UTF-8">
   <title>TIMO Match - 깃허브 트러블슈팅 매칭</title>
-  <style>
-    body { margin: 0; font-family: sans-serif; background-color: #F3F4F9; display: flex; align-items: center; justify-content: center; height: 100vh; }
-    .container { background: white; padding: 48px; border-radius: 24px; box-shadow: 0 4px 12px rgba(0,0,0,0.05); text-align: center; max-width: 400px; }
-    h1 { color: #21005D; margin-top: 0; font-size: 28px; }
-    p { color: #49454F; margin-bottom: 32px; line-height: 1.5; }
-    .btn-github { background-color: #1D1B20; color: white; border: none; padding: 14px 24px; border-radius: 100px; font-weight: 600; font-size: 16px; cursor: pointer; width: 100%; transition: background-color 0.2s; }
-    .btn-github:hover { background-color: #313033; }
-  </style>
+  <link rel="stylesheet" href="/css/index.css">
 </head>
 <body>
-  <div class="container">
-    <h1>TIMO Match</h1>
-    <p>깃허브 PR과 트러블슈팅 데이터를 분석하여<br>최적의 팀원을 매칭하고 코드를 리뷰합니다.</p>
-    <button class="btn-github" onclick="loginWithGithub()">GitHub로 로그인 / 가입</button>
+  <script>
+    if (localStorage.getItem('timo_theme') === 'dark') {
+      document.body.classList.add('dark-mode');
+    }
+  </script>
+
+  <div class="floating-bg">
+    <div class="snippet snippet-1">
+      <span class="keyword">commit</span> <span class="hash">a1b2c3d</span><br>
+      <span class="string">"refactor: optimize matching algorithm"</span>
+    </div>
+    <div class="snippet snippet-2">
+      <span class="keyword">const</span> match = <span class="keyword">await</span> <span class="function">findBestPartner</span>(user);<br>
+      <span class="comment">// Returns the optimal teammate</span>
+    </div>
+    <div class="snippet snippet-3">
+      <span class="keyword">Merge</span> pull request <span class="hash">#42</span> from feature/ai-review<br>
+      <span class="comment">Adds automated PR analysis</span>
+    </div>
+    <div class="snippet snippet-4">
+      [SUCCESS] <span class="function">Build passing</span> in 1m 24s<br>
+      <span class="comment">All 142 tests passed.</span>
+    </div>
+  </div>
+
+  <a href="/" class="header-logo">TIMOMATCH</a>
+  
+  <button id="themeToggle" class="theme-toggle">Dark Mode</button>
+
+  <div class="main-wrapper">
+    <div class="text-container">
+      <div class="typing-container">
+        <span id="typingText"></span><span class="cursor"></span>
+      </div>
+    </div>
+    
+    <div class="login-container">
+      <button class="btn-github" id="loginBtn" onclick="handleLoginClick()">GitHub로 시작하기</button>
+    </div>
   </div>
 
   <script src="/js/index.js"></script>

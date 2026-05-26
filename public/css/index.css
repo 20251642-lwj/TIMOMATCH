@@ -1,0 +1,240 @@
+/* 다크 모드와 라이트 모드 컬러 변수 정의 */
+:root {
+  --bg-color: #F0F5FA;
+  --text-primary: #1D1B20;
+  --text-secondary: #49454F;
+  --typing-color: #21005D;
+  
+  /* 버튼 강조 컬러 */
+  --btn-primary-bg: #21005D;
+  --btn-primary-text: #FFFFFF;
+  --btn-primary-hover: #31008A;
+  
+  /* 테마 토글 버튼용 추가 변수 */
+  --btn-bg: #FFFFFF;
+  --btn-border: rgba(55, 53, 47, 0.16);
+  --btn-hover: rgba(55, 53, 47, 0.04);
+  --toggle-shadow: rgba(0, 0, 0, 0.08); 
+  
+  /* 배경 스니펫 컬러 */
+  --snippet-bg: rgba(255, 255, 255, 0.7);
+  --snippet-border: rgba(0, 0, 0, 0.08);
+  --snippet-text: #24292E;
+  
+  /* 코드 구문 강조 컬러 */
+  --code-keyword: #D73A49; 
+  --code-hash: #6F42C1; 
+  --code-string: #032F62; 
+  --code-function: #005CC5; 
+  --code-comment: #6A737D; 
+}
+
+body.dark-mode {
+  --bg-color: #121212;
+  --text-primary: #E0E0E0;
+  --text-secondary: #A0A0A0;
+  --typing-color: #D0BCFF;
+  
+  /* 다크 모드 버튼 강조 컬러 */
+  --btn-primary-bg: #D0BCFF;
+  --btn-primary-text: #21005D;
+  --btn-primary-hover: #E8DEFF;
+  
+  /* 다크 모드 테마 토글 버튼용 추가 변수 */
+  --btn-bg: #1E1E1E;
+  --btn-border: rgba(255, 255, 255, 0.2);
+  --btn-hover: rgba(255, 255, 255, 0.1);
+  --toggle-shadow: rgba(255, 255, 255, 0.15); 
+  
+  --snippet-bg: rgba(36, 41, 46, 0.6);
+  --snippet-border: rgba(255, 255, 255, 0.1);
+  --snippet-text: #E1E4E8;
+  
+  /* 다크 모드 코드 구문 강조 컬러 */
+  --code-keyword: #F97583;
+  --code-hash: #B392F0;
+  --code-string: #9ECBFF;
+  --code-function: #79B8FF;
+  --code-comment: #959DA5;
+}
+
+body { 
+  margin: 0; 
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif; 
+  background-color: var(--bg-color); 
+  height: 100vh; 
+  color: var(--text-primary); 
+  overflow: hidden; 
+  transition: background-color 0.3s ease, color 0.3s ease;
+  position: relative;
+}
+
+/* 상단 로고 */
+.header-logo {
+  position: absolute;
+  top: 32px;
+  left: 40px;
+  font-size: 30px; 
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  color: var(--text-primary);
+  text-decoration: none; 
+  z-index: 10;
+  transition: opacity 0.2s ease, color 0.3s ease;
+}
+
+.header-logo:hover {
+  opacity: 0.7; 
+}
+
+/* 테마 토글 버튼 (우측 하단) */
+.theme-toggle {
+  position: absolute;
+  bottom: 32px; 
+  right: 40px;
+  background-color: var(--btn-bg); 
+  border: 1px solid var(--btn-border);
+  color: var(--text-primary);
+  padding: 8px 16px;
+  border-radius: 100px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  z-index: 10;
+  box-shadow: 0 4px 12px var(--toggle-shadow);
+  transition: all 0.2s ease;
+}
+
+.theme-toggle:hover {
+  background-color: var(--btn-hover);
+  transform: translateY(-2px); 
+  box-shadow: 0 6px 16px var(--toggle-shadow);
+}
+
+/* 떠다니는 배경 코드 스니펫 */
+.floating-bg {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  top: 0;
+  left: 0;
+  z-index: 0;
+  pointer-events: none;
+}
+
+.snippet {
+  position: absolute;
+  background: var(--snippet-bg);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  border: 1px solid var(--snippet-border);
+  color: var(--snippet-text);
+  padding: 14px 18px;
+  border-radius: 8px; 
+  font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, "Liberation Mono", monospace;
+  font-size: 13px;
+  line-height: 1.5;
+  white-space: nowrap;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.04);
+  opacity: 0;
+  animation: floatUp 18s linear infinite;
+  transition: all 0.3s ease;
+  text-align: left;
+}
+
+/* 코드 구문 강조 클래스 */
+.snippet .keyword { color: var(--code-keyword); }
+.snippet .hash { color: var(--code-hash); }
+.snippet .string { color: var(--code-string); }
+.snippet .function { color: var(--code-function); }
+.snippet .comment { color: var(--code-comment); font-style: italic; }
+
+.snippet-1 { left: 8%; bottom: -15%; animation-delay: 0s; }
+.snippet-2 { left: 75%; bottom: -20%; animation-delay: 4s; }
+.snippet-3 { left: 15%; bottom: -25%; animation-delay: 9s; }
+.snippet-4 { left: 65%; bottom: -10%; animation-delay: 14s; }
+
+@keyframes floatUp {
+  0% { transform: translateY(0) rotate(-1deg); opacity: 0; }
+  3% { opacity: 1; } 
+  85% { opacity: 1; }
+  100% { transform: translateY(-85vh) rotate(1deg); opacity: 0; }
+}
+
+/* 메인 레이아웃 */
+.main-wrapper {
+  position: relative;
+  width: 100vw;
+  height: 100vh;
+}
+
+/* 정중앙 타이핑 텍스트 영역 */
+.text-container {
+  position: absolute;
+  left: 50%;
+  top: 45%; 
+  transform: translate(-50%, -50%);
+  width: max-content;
+  z-index: 1;
+}
+
+.typing-container {
+  min-height: 80px; 
+  font-size: 28px; 
+  font-weight: 700;
+  line-height: 1.6;
+  color: var(--typing-color);
+  text-align: center; 
+  transition: color 0.3s ease;
+}
+
+.cursor {
+  display: inline-block;
+  width: 2px;
+  height: 28px;
+  background-color: var(--typing-color);
+  animation: blink 1s step-end infinite;
+  vertical-align: middle;
+  margin-left: 4px;
+}
+
+@keyframes blink {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0; }
+}
+
+/* 중앙 하단 로그인 컨테이너 */
+.login-container { 
+  position: absolute;
+  bottom: 15vh; 
+  left: 50%;
+  transform: translateX(-50%);
+  width: 320px; 
+  text-align: center;
+  z-index: 2;
+}
+
+/* CTA 버튼 스타일 */
+.btn-github { 
+  background-color: var(--btn-primary-bg); 
+  color: var(--btn-primary-text); 
+  border: none; 
+  padding: 0 24px; 
+  border-radius: 100px; 
+  font-weight: 600; 
+  font-size: 16px; 
+  cursor: pointer; 
+  width: 100%; 
+  height: 52px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 8px 20px rgba(33, 0, 93, 0.15); 
+  transition: all 0.2s ease; 
+}
+
+.btn-github:hover { 
+  background-color: var(--btn-primary-hover); 
+  transform: translateY(-2px); 
+  box-shadow: 0 12px 24px rgba(33, 0, 93, 0.2);
+}
