@@ -73,12 +73,12 @@ exports.githubCallback = async (req, res) => {
       { expiresIn: '1h' } 
     );
 
+    // 기존 savedUser.role 조건문 전체를 아래와 같이 교체
     if (savedUser.role === 'PENDING') {
       res.redirect(`/first-login.html?token=${jwtToken}`);
-    } else if (savedUser.role === 'PROFESSOR') {
-      res.redirect(`/prof-home.html?token=${jwtToken}`);
-    } else if (savedUser.role === 'STUDENT') {
-      res.redirect(`/student-home.html?token=${jwtToken}`);
+    } else {
+      // 이미 역할을 부여받은 기존 유저는 학생/교수 구분 없이 통합 대시보드로 이동
+      res.redirect(`/dashboard.html?token=${jwtToken}`);
     }
 
   } catch (error) {

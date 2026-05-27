@@ -1,0 +1,112 @@
+/* public/css/layout.css */
+
+html, body {
+  margin: 0;
+  padding: 0;
+  height: 100vh;
+  overflow: hidden;
+  display: block; /* first-login.css의 강제 flex 중앙 정렬 무효화 */
+}
+
+.app-layout {
+  display: flex;
+  width: 100%;
+  height: 100vh;
+  background-color: var(--bg-color);
+}
+
+/* 좌측 글로벌 네비게이션 바 */
+.gnb-container {
+  width: 240px;
+  background: var(--glass-bg);
+  border-right: 1px solid var(--card-border);
+  display: flex;
+  flex-direction: column;
+  padding: 24px 0;
+  box-sizing: border-box;
+}
+
+.gnb-header {
+  padding: 0 24px;
+  font-size: 20px;
+  font-weight: 800;
+  color: var(--primary-bg);
+  margin-bottom: 32px;
+  letter-spacing: -0.5px;
+}
+
+.gnb-menu {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  flex: 1;
+}
+
+.gnb-menu li {
+  margin-bottom: 4px;
+}
+
+.gnb-menu a {
+  display: block;
+  padding: 12px 24px;
+  text-decoration: none;
+  color: var(--text-secondary);
+  font-size: 14px;
+  font-weight: 600;
+  transition: all 0.2s ease;
+}
+
+.gnb-menu a:hover {
+  background: var(--card-hover);
+  color: var(--text-primary);
+}
+
+.gnb-menu li.active a {
+  background: var(--primary-container);
+  color: var(--on-primary-container);
+  border-right: 3px solid var(--primary-bg);
+}
+
+.gnb-footer {
+  padding: 0 24px;
+}
+
+.btn-logout-text {
+  background: none;
+  border: none;
+  padding: 12px 0;
+  color: #BA1A1A;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  width: 100%;
+  text-align: left;
+}
+
+.btn-logout-text:hover {
+  text-decoration: underline;
+}
+
+/* 우측 메인 콘텐츠 영역 */
+.main-content {
+  flex: 1;
+  overflow-y: auto;
+  padding: 40px;
+  box-sizing: border-box;
+}
+
+.page-header {
+  margin-bottom: 32px;
+}
+
+.page-header h1 {
+  margin: 0 0 8px 0;
+  font-size: 24px;
+  color: var(--text-primary);
+}
+
+.page-header p {
+  margin: 0;
+  color: var(--text-secondary);
+  font-size: 14px;
+}

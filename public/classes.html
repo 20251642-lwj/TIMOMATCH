@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <title>TIMO Match - 과목 관리</title>
+  <link rel="stylesheet" href="/css/first-login.css">
+  <link rel="stylesheet" href="/css/layout.css">
+  <link rel="stylesheet" href="/css/classes.css">
+</head>
+<body>
+  <script>
+    if (localStorage.getItem('timo_theme') === 'dark') {
+      document.body.classList.add('dark-mode');
+    }
+  </script>
+
+  <div class="app-layout">
+    <nav id="gnb-container" class="gnb-container"></nav>
+
+    <main class="main-content">
+      <div class="page-header">
+        <h1 id="pageTitle">과목 및 프로젝트 관리</h1>
+        <p id="pageDescription">소속된 대학교의 강좌를 관리하고 프로젝트 연동 상태를 추적합니다.</p>
+      </div>
+
+      <div id="profActionCard" class="section-card" style="display: none;">
+        <h3>새 과목 개설</h3>
+        <div class="form-flex">
+          <div class="input-group" style="margin: 0;">
+            <input type="text" id="classNameInput" placeholder="과목 이름 (예: 소프트웨어 공학)">
+          </div>
+          <button class="btn-submit" onclick="handleCreateClass()" style="width: 100%; height: 48px;">
+            과목 개설 및 초대 코드 발급
+          </button>
+        </div>
+        <div id="creationResult" class="result-alert" style="display: none;"></div>
+      </div>
+
+      <div id="studentActionCard" class="section-card student-enroll-theme" style="display: none;">
+        <h3>수강 과목 등록</h3>
+        <p class="enroll-sub-text">교수님이 공유한 초대 코드를 입력하세요.</p>
+        <div class="inline-form">
+          <div class="input-group" style="margin: 0; flex: 1;">
+            <input type="text" id="inviteCode" placeholder="TIMO-XXXXXX">
+          </div>
+          <button class="btn-submit" onclick="handleEnrollClass()" style="flex: none; width: 100px; height: 48px;">등록</button>
+        </div>
+        <p id="enrollMessage" class="status-msg" style="display: none;"></p>
+      </div>
+
+      <div id="projectFormContainer" class="section-card" style="display: none; border-color: var(--card-border-selected);">
+        <h3 id="formTargetTitle">프로젝트 연동</h3>
+        <input type="hidden" id="selectedClassId">
+        <div class="form-flex">
+          <div class="input-group" style="margin: 0;">
+            <input type="text" id="projectTitle" placeholder="프로젝트 이름을 입력하세요">
+          </div>
+          <div class="input-group" style="margin: 0;">
+            <input type="text" id="projectUrl" placeholder="GitHub 레포지토리 주소 (https://github.com/...)">
+          </div>
+          <button class="btn-submit" onclick="handleCreateProject()" style="width: 100%; height: 48px;">제출하기</button>
+        </div>
+        <p id="creationMessage" class="status-msg" style="display: none;"></p>
+      </div>
+
+      <div class="section-card">
+        <h3 id="listCardTitle">내 과목 목록</h3>
+        <div id="classListContainer" class="list-grid">
+          <p style="color: var(--text-secondary); margin: 0;">데이터를 불러오는 중...</p>
+        </div>
+      </div>
+
+      <div id="studentProjectSection" class="section-card" style="display: none;">
+        <h3>내 프로젝트 제출 현황</h3>
+        <div id="projectListContainer" class="list-grid">
+          <p style="color: var(--text-secondary); margin: 0;">데이터를 불러오는 중...</p>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <script src="/js/auth-guard.js"></script>
+  <script src="/js/classes.js"></script>
+</body>
+</html>

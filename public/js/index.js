@@ -1,23 +1,8 @@
 // public/js/index.js
 
-// 1. 인증 및 리다이렉트 (가장 먼저 실행)
-window.onload = function() {
-  const jwt = localStorage.getItem('timo_jwt');
-  if (jwt) {
-    try {
-      const payload = JSON.parse(atob(jwt.split('.')[1]));
-      if (payload.role === 'PROFESSOR') {
-        location.href = '/prof-home.html';
-      } else if (payload.role === 'STUDENT') {
-        location.href = '/student-home.html';
-      }
-    } catch (error) {
-      localStorage.removeItem('timo_jwt');
-    }
-  }
-};
+// [수정됨] 토큰이 존재할 때 대시보드로 강제 이동시키는 window.onload 로직을 완전히 제거했습니다.
 
-// 2. UI 초기화 및 이벤트 리스너 바인딩
+// 1. UI 초기화 및 이벤트 리스너 바인딩
 document.addEventListener('DOMContentLoaded', () => {
   const themeToggleBtn = document.getElementById('themeToggle');
   
@@ -44,7 +29,7 @@ document.addEventListener('DOMContentLoaded', () => {
   typeWriter();
 });
 
-// 3. 전역 로그인 함수 (HTML onclick 바인딩용)
+// 2. 전역 로그인 함수 (HTML onclick 바인딩용)
 window.handleLoginClick = function() {
   const btn = document.getElementById('loginBtn');
   if (btn) {
@@ -74,7 +59,7 @@ window.addEventListener('pageshow', (event) => {
   }
 });
 
-// 4. 타이핑 효과 상세 구현
+// 3. 타이핑 효과 상세 구현
 const phrases = [
   "깃허브 PR과 트러블슈팅 데이터를 분석하여\n최적의 팀원을 매칭합니다.",
   "AI 기반 꼼꼼한 코드 리뷰로\n프로젝트의 퀄리티를 높이세요.",

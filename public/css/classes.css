@@ -1,0 +1,120 @@
+/* public/css/classes.css */
+.section-card {
+  background: var(--card-bg);
+  border: 1px solid var(--card-border);
+  border-radius: 20px;
+  padding: 24px;
+  margin-bottom: 24px;
+  text-align: left;
+}
+.section-card h3 {
+  margin-top: 0;
+  margin-bottom: 16px;
+  font-size: 18px;
+  font-weight: 700;
+}
+.student-enroll-theme {
+  background: var(--primary-container);
+  color: var(--on-primary-container);
+  border-color: var(--card-border-selected);
+}
+.student-enroll-theme h3 {
+  color: var(--on-primary-container);
+}
+.enroll-sub-text {
+  margin: 0 0 12px 0;
+  font-size: 14px;
+  color: var(--on-primary-container);
+  opacity: 0.8;
+}
+.form-flex {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.inline-form {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+}
+.inline-form .btn-submit {
+  background: var(--primary-bg);
+  color: var(--primary-text);
+}
+.list-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.list-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px;
+  border: 1px solid var(--card-border);
+  border-radius: 12px;
+  background: var(--glass-bg);
+}
+.list-item strong {
+  font-size: 16px;
+  color: var(--text-primary);
+}
+.code-badge {
+  font-family: monospace;
+  font-size: 14px;
+  font-weight: 700;
+  color: #B3261E;
+  background: rgba(179, 38, 30, 0.1);
+  padding: 4px 8px;
+  border-radius: 6px;
+}
+.project-card {
+  padding: 16px;
+  border: 1px solid var(--card-border);
+  border-radius: 12px;
+  background: var(--glass-bg);
+}
+.project-card h4 {
+  margin: 0 0 8px 0;
+  font-size: 16px;
+}
+.project-card p {
+  margin: 0 0 8px 0;
+  font-size: 14px;
+}
+.project-card span {
+  font-size: 12px;
+  color: var(--text-secondary);
+}
+.class-badge {
+  display: inline-block;
+  padding: 4px 8px;
+  border-radius: 6px;
+  font-size: 11px;
+  font-weight: 600;
+  background: var(--primary-container);
+  color: var(--on-primary-container);
+  margin-bottom: 8px;
+}
+.status-msg {
+  margin-top: 12px;
+  font-size: 14px;
+  font-weight: 600;
+}
+.result-alert {
+  margin-top: 16px;
+  padding: 16px;
+  border-radius: 12px;
+  font-size: 14px;
+  line-height: 1.5;
+}
+.alert-success {
+  background: var(--primary-container);
+  color: var(--on-primary-container);
+  border: 1px solid var(--card-border-selected);
+}
+.alert-danger {
+  background: rgba(186, 26, 26, 0.1);
+  color: #BA1A1A;
+  border: 1px solid #BA1A1A;
+}

@@ -204,7 +204,7 @@ function submitRole() {
     if (data.token) {
       localStorage.setItem('timo_jwt', data.token);
       sessionStorage.removeItem('timo_temp_token');
-      location.href = selectedRole === 'PROFESSOR' ? '/prof-home.html' : '/student-home.html';
+      location.href = '/dashboard.html'; // 갱신된 통합 대시보드 진입점
     }
   })
   .catch(err => {

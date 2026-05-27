@@ -7,6 +7,7 @@ const authRoutes = require('./routes/auth.routes');
 const projectRoutes = require('./routes/project.routes');
 const classRoutes = require('./routes/class.routes');
 const enrollRoutes = require('./routes/enroll.routes');
+const profileRoutes = require('./routes/profile.routes'); // 경로 확인 필요
 
 const app = express();
 
@@ -21,6 +22,7 @@ app.use('/api/auth', authRoutes);
 app.use('/api/projects', projectRoutes);
 app.use('/api/classes', classRoutes);
 app.use('/api/enroll', enrollRoutes);
+app.use('/api/profile', profileRoutes);
 
 const PORT = process.env.PORT || 3000;
 

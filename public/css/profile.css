@@ -1,0 +1,60 @@
+/* public/css/profile.css */
+.section-card {
+  background: var(--card-bg);
+  border: 1px solid var(--card-border);
+  border-radius: 20px;
+  padding: 24px;
+  margin-bottom: 24px;
+  text-align: left;
+}
+
+.section-card h3 {
+  margin-top: 0;
+  margin-bottom: 20px;
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.info-group {
+  margin-bottom: 16px;
+}
+
+.info-group:last-child {
+  margin-bottom: 0;
+}
+
+.info-group label {
+  display: block;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  margin-bottom: 6px;
+}
+
+.info-value {
+  font-size: 16px;
+  font-weight: 500;
+  color: var(--text-primary);
+  padding: 10px 14px;
+  background: var(--glass-bg);
+  border: 1px solid var(--card-border);
+  border-radius: 8px;
+}
+
+.tag-container {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding: 8px 0;
+}
+
+.profile-tag {
+  font-size: 13px;
+  font-weight: 600;
+  padding: 6px 12px;
+  border-radius: 20px;
+  background: var(--primary-container);
+  color: var(--on-primary-container);
+  border: 1px solid var(--card-border-selected);
+}

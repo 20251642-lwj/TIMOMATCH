@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <title>TIMO Match - 대시보드</title>
+  <link rel="stylesheet" href="/css/first-login.css">
+  <link rel="stylesheet" href="/css/layout.css">
+</head>
+<body>
+  <script>
+    if (localStorage.getItem('timo_theme') === 'dark') {
+      document.body.classList.add('dark-mode');
+    }
+  </script>
+
+  <div class="app-layout">
+    <nav id="gnb-container" class="gnb-container"></nav>
+
+    <main class="main-content">
+      <div class="page-header">
+        <h1>대시보드 요약</h1>
+        <p>현재 등록된 시스템 현황의 요약 정보입니다.</p>
+      </div>
+      
+      <div style="padding: 40px; border: 1px dashed var(--card-border); border-radius: 12px; text-align: center; color: var(--text-secondary);">
+        <p>요약 데이터 렌더링 영역 (구현 예정)</p>
+      </div>
+    </main>
+  </div>
+
+  <script src="/js/auth-guard.js"></script>
+</body>
+</html>

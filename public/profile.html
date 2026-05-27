@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <title>TIMO Match - 프로필 설정</title>
+  <link rel="stylesheet" href="/css/first-login.css">
+  <link rel="stylesheet" href="/css/layout.css">
+  <link rel="stylesheet" href="/css/profile.css">
+</head>
+<body>
+  <script>
+    if (localStorage.getItem('timo_theme') === 'dark') {
+      document.body.classList.add('dark-mode');
+    }
+  </script>
+
+  <div class="app-layout">
+    <nav id="gnb-container" class="gnb-container"></nav>
+
+    <main class="main-content">
+      <div class="page-header">
+        <h1>프로필 설정</h1>
+        <p>계정 정보 및 연동된 상세 프로필 데이터를 확인합니다.</p>
+      </div>
+
+      <div class="section-card">
+        <h3>기본 계정 정보</h3>
+        <div class="info-group">
+          <label>소속 직군</label>
+          <div id="infoRole" class="info-value">확인 중...</div>
+        </div>
+        <div class="info-group">
+          <label>사용자명 (닉네임)</label>
+          <div id="infoName" class="info-value">확인 중...</div>
+        </div>
+      </div>
+
+      <div id="detailProfileCard" class="section-card">
+        <h3>상세 프로필 정보</h3>
+        <div id="studentFields" style="display: none;">
+          <div class="info-group">
+            <label>실명</label>
+            <div id="infoRealNameStudent" class="info-value">-</div>
+          </div>
+          <div class="info-group">
+            <label>학번</label>
+            <div id="infoStudentNumber" class="info-value">-</div>
+          </div>
+          <div class="info-group">
+            <label>보유 기술 스택</label>
+            <div id="infoTechStack" class="tag-container"></div>
+          </div>
+        </div>
+
+        <div id="professorFields" style="display: none;">
+          <div class="info-group">
+            <label>교수 실명</label>
+            <div id="infoRealNameProf" class="info-value">-</div>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <script src="/js/auth-guard.js"></script>
+  <script src="/js/profile.js"></script>
+</body>
+</html>
