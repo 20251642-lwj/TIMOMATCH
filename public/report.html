@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <title>TIMO Match - AI 분석 리포트</title>
+  <link rel="stylesheet" href="/css/first-login.css">
+  <link rel="stylesheet" href="/css/layout.css">
+  <link rel="stylesheet" href="/css/classes.css">
+  <link rel="stylesheet" href="/css/report.css">
+  <script src="/js/theme.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+  
+  <div id="loadingOverlay" class="loading-overlay" style="display:none;">
+    <div class="spinner"></div>
+    <h2 id="loadingStatus" style="font-weight: 700; letter-spacing: -0.5px; margin: 0;">데이터 파싱 및 AI 진단 수행 중...</h2>
+  </div>
+
+  <div id="feedbackModalBackdrop" class="modal-backdrop" style="display: none;">
+    <div class="prompt-modal">
+      <h2 id="feedbackModalTitle" style="margin:0 0 12px 0; font-size:20px; font-weight:800; color:var(--text-primary);">피드백 작성</h2>
+      <textarea id="feedbackInput" class="prompt-textarea" rows="4" placeholder="내용을 입력하세요."></textarea>
+      <div style="display: flex; gap: 12px; justify-content: flex-end;">
+        <button class="btn-secondary" onclick="closeFeedbackModal()" style="height:44px; padding:0 20px;">취소</button>
+        <button class="btn-submit" onclick="submitFeedbackAction()" style="height:44px; padding:0 24px; flex:none;">등록 완료</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="app-layout">
+    <nav id="gnb-container" class="gnb-container"></nav>
+    <main class="main-content">
+      
+      <div class="content-wrapper">
+        
+        <div class="page-header" style="display: flex; justify-content: space-between; align-items: flex-start;">
+          <div>
+            <button onclick="history.back()" class="btn-secondary" style="margin-bottom: 16px; height: 32px; padding: 0 16px; font-size: 13px;">← 뒤로가기</button>
+            <h1 id="projectTitle">프로젝트 로딩 중...</h1>
+            <p><a id="githubLink" href="#" target="_blank" style="color:var(--primary-bg); font-weight:600; text-decoration:none; display:none;">GitHub 저장소 바로가기</a></p>
+          </div>
+          <button id="btnForceAnalyze" class="btn-submit" style="display:none; height:44px; padding:0 24px; font-size:14px;" onclick="forceAnalyzeFromReport()">🔄 AI 최신화 재분석</button>
+        </div>
+
+        <div id="goalContainer" class="section-card" style="display:none; padding:16px 24px; background:var(--glass-bg); margin-bottom:24px; border-left:4px solid var(--primary-bg);">
+          <h3 style="margin:0 0 8px 0; font-size:14px; color:var(--text-secondary);">학생이 설정한 프로젝트 목표</h3>
+          <p id="pGoal" style="margin:0; font-size:15px; font-weight:600; color:var(--text-primary);"></p>
+        </div>
+
+        <div class="metrics-grid">
+          <div class="metric-box"><div class="metric-box-title">총 커밋 수</div><div class="metric-box-value" id="mTotalCommits">0</div></div>
+          <div class="metric-box"><div class="metric-box-title">총 PR 수</div><div class="metric-box-value" id="mTotalPRs">0</div></div>
+          <div class="metric-box"><div class="metric-box-title">PR 병합</div><div class="metric-box-value" id="mMerged">0</div></div>
+          <div class="metric-box"><div class="metric-box-title">진행 중(Open)</div><div class="metric-box-value" id="mOpen">0</div></div>
+        </div>
+
+        <div class="chart-container">
+          <h3 style="margin-top: 0; margin-bottom: 20px; font-size: 16px; color: var(--text-primary);">프로젝트 활동 타임라인 (최근 커밋 및 PR 추이)</h3>
+          <div style="position: relative; height: 300px; width: 100%;">
+            <canvas id="timelineChart"></canvas>
+          </div>
+        </div>
+
+        <div class="section-card" style="background:var(--primary-container); border-color:var(--card-border-selected); margin-bottom:20px; padding:24px;">
+          <h3 style="margin:0 0 10px 0; color:var(--on-primary-container); font-size:16px;">형상 관리 요약</h3>
+          <p id="rSummary" style="margin:0; font-size:15px; line-height:1.6; color:var(--on-primary-container);"></p>
+        </div>
+
+        <div class="section-card" style="margin-bottom:24px; padding:24px;">
+          <h3 style="margin:0 0 10px 0; font-size:16px; color:var(--text-primary);">목표 달성 및 협업 평가 의견 (AI 진단)</h3>
+          <p id="rEval" style="margin:0; font-size:15px; line-height:1.6; color:var(--text-secondary);"></p>
+        </div>
+
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 24px;">
+          <div>
+            <h4 style="font-size:15px; margin:0 0 12px 0; color:var(--text-primary);">팀원별 기여도 (최근 커밋 기준)</h4>
+            <div id="contributorListContainer" class="list-grid" style="gap: 12px;"></div>
+          </div>
+          <div>
+            <h4 style="font-size:15px; margin:0 0 12px 0; color:var(--text-primary);">최근 Pull Request 내역</h4>
+            <div id="prTimelineContainer" class="list-grid" style="gap: 12px;"></div>
+          </div>
+        </div>
+
+        <div class="section-card" style="margin-top: 24px;">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+            <h3 style="margin:0; font-size:16px; color:var(--text-primary);">교수 피드백 및 학생 소명</h3>
+            <button id="btnCreateFeedback" class="btn-submit" style="display:none; height:36px; padding:0 16px; font-size:13px;" onclick="openFeedbackModal('CREATE')">새 피드백 남기기</button>
+          </div>
+          <div id="feedbackListContainer" style="display: flex; flex-direction: column; gap: 16px;">
+            <p style="color:var(--text-secondary); font-size:14px; margin:0;">데이터 로딩 중...</p>
+          </div>
+        </div>
+
+      </div>
+    </main>
+  </div>
+
+  <script src="/js/auth-guard.js"></script>
+  <script src="/js/report.js"></script>
+</body>
+</html>

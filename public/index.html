@@ -4,14 +4,9 @@
   <meta charset="UTF-8">
   <title>TIMO Match - 깃허브 트러블슈팅 매칭</title>
   <link rel="stylesheet" href="/css/index.css">
+  <script src="/js/theme.js"></script>
 </head>
 <body>
-  <script>
-    if (localStorage.getItem('timo_theme') === 'dark') {
-      document.body.classList.add('dark-mode');
-    }
-  </script>
-
   <div class="floating-bg">
     <div class="snippet snippet-1">
       <span class="keyword">commit</span> <span class="hash">a1b2c3d</span><br>
@@ -29,11 +24,19 @@
       [SUCCESS] <span class="function">Build passing</span> in 1m 24s<br>
       <span class="comment">All 142 tests passed.</span>
     </div>
+    <div class="snippet snippet-5">
+      <span class="keyword">const</span> insight = <span class="keyword">await</span> <span class="function">analyzePattern</span>(prs);<br>
+      <span class="comment">// 1 design debt detected.</span>
+    </div>
+    <div class="snippet snippet-6">
+      <span class="keyword">git</span> push origin <span class="function">feat/ai-insight</span><br>
+      <span class="comment">Total 3 commits pushed.</span>
+    </div>
   </div>
 
   <a href="/" class="header-logo">TIMOMATCH</a>
   
-  <button id="themeToggle" class="theme-toggle">Dark Mode</button>
+  <button id="themeToggle" class="theme-toggle" onclick="toggleTheme()">Dark Mode</button>
 
   <div class="main-wrapper">
     <div class="text-container">

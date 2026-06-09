@@ -1,4 +1,5 @@
 /* public/css/classes.css */
+
 .section-card {
   background: var(--card-bg);
   border: 1px solid var(--card-border);
@@ -59,6 +60,8 @@
   font-size: 16px;
   color: var(--text-primary);
 }
+
+/* 복사 기능을 위한 UI 힌트 및 호버 효과 추가 */
 .code-badge {
   font-family: monospace;
   font-size: 14px;
@@ -67,7 +70,28 @@
   background: rgba(179, 38, 30, 0.1);
   padding: 4px 8px;
   border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: inline-block;
+  min-width: 100px;
+  text-align: center;
 }
+
+.code-badge:hover {
+  background: rgba(179, 38, 30, 0.2);
+  transform: translateY(-1px);
+}
+
+.code-badge:active {
+  transform: translateY(0);
+}
+
+/* 복사 성공 시 적용될 임시 스타일 */
+.code-badge.copied {
+  color: #0F5132;
+  background: rgba(15, 81, 50, 0.15);
+}
+
 .project-card {
   padding: 16px;
   border: 1px solid var(--card-border);
@@ -117,4 +141,41 @@
   background: rgba(186, 26, 26, 0.1);
   color: #BA1A1A;
   border: 1px solid #BA1A1A;
+}
+
+/* =========================================
+   AI 진단 포커스 설정 모달 및 카테고리 칩 UI 
+   ========================================= */
+.modal-backdrop {
+  position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+  background: rgba(0, 0, 0, 0.6); backdrop-filter: blur(4px); -webkit-backdrop-filter: blur(4px);
+  z-index: 9999; display: flex; justify-content: center; align-items: center;
+}
+.prompt-modal {
+  background: var(--bg-color); border: 1px solid var(--card-border);
+  border-radius: 24px; width: 90%; max-width: 540px; padding: 32px;
+  box-shadow: 0 20px 40px rgba(0,0,0,0.2);
+}
+.prompt-textarea {
+  width: 100%; padding: 16px; border-radius: 12px;
+  border: 1px solid var(--card-border); background: var(--card-bg);
+  color: var(--text-primary); font-family: inherit; font-size: 14px;
+  line-height: 1.5; resize: vertical; margin-bottom: 24px;
+}
+.prompt-textarea:focus { outline: none; border-color: var(--primary-bg); }
+
+/* 카테고리 칩 UI 스타일 */
+.category-grid {
+  display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 20px;
+}
+.cat-chip {
+  padding: 12px; border: 1px solid var(--card-border); border-radius: 12px;
+  background: var(--card-bg); color: var(--text-secondary);
+  font-size: 13px; font-weight: 600; cursor: pointer; text-align: center;
+  transition: all 0.2s ease; user-select: none;
+}
+.cat-chip:hover { background: var(--card-hover); }
+.cat-chip.selected {
+  background: var(--primary-container); color: var(--on-primary-container);
+  border-color: var(--card-border-selected); font-weight: 700;
 }

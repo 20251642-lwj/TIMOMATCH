@@ -5,29 +5,32 @@
   <title>TIMO Match - 대시보드</title>
   <link rel="stylesheet" href="/css/first-login.css">
   <link rel="stylesheet" href="/css/layout.css">
+  <link rel="stylesheet" href="/css/classes.css">
+  <script src="/js/theme.js"></script>
 </head>
 <body>
-  <script>
-    if (localStorage.getItem('timo_theme') === 'dark') {
-      document.body.classList.add('dark-mode');
-    }
-  </script>
-
+  
   <div class="app-layout">
     <nav id="gnb-container" class="gnb-container"></nav>
-
     <main class="main-content">
-      <div class="page-header">
-        <h1>대시보드 요약</h1>
-        <p>현재 등록된 시스템 현황의 요약 정보입니다.</p>
-      </div>
-      
-      <div style="padding: 40px; border: 1px dashed var(--card-border); border-radius: 12px; text-align: center; color: var(--text-secondary);">
-        <p>요약 데이터 렌더링 영역 (구현 예정)</p>
+      <div class="content-wrapper">
+        
+        <div class="page-header" style="display: flex; justify-content: space-between; align-items: flex-end;">
+          <div>
+            <h1 id="dashboardTitle">내 대시보드</h1>
+            <p id="dashboardSubtitle" style="margin:0;">환영합니다. 현재 권한에 따른 통합 현황 데이터를 로딩 중입니다.</p>
+          </div>
+        </div>
+        
+        <div id="dashboardContent" class="form-flex">
+          <p style="color:var(--text-secondary);">데이터 로딩 중...</p>
+        </div>
+
       </div>
     </main>
   </div>
 
   <script src="/js/auth-guard.js"></script>
+  <script src="/js/dashboard.js"></script>
 </body>
 </html>

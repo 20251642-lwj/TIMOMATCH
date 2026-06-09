@@ -95,6 +95,14 @@ html, body {
   box-sizing: border-box;
 }
 
+/* 모든 페이지 콘텐츠의 무한 팽창을 막고 정중앙 정렬을 강제하는 전역 컨테이너 */
+.content-wrapper {
+  max-width: 1080px;
+  margin-left: auto;
+  margin-right: auto;
+  width: 100%;
+}
+
 .page-header {
   margin-bottom: 32px;
 }

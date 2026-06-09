@@ -1,3 +1,5 @@
+/* public/css/first-login.css */
+
 :root {
   --bg-color: #F0F5FA;
   --text-primary: #1D1B20;
@@ -115,17 +117,35 @@ p { font-size: 14px; color: var(--text-secondary); margin: 0 0 36px 0; line-heig
 
 /* 버튼 그룹 레이아웃 */
 .btn-group { display: flex; gap: 12px; margin-top: 32px; }
+
+/* 공통 버튼 디자인 (무한 팽창 방지 및 규격화) */
 .btn-secondary { 
   background-color: transparent; color: var(--text-primary); border: 2px solid var(--card-border); 
-  padding: 0 24px; border-radius: 100px; font-weight: 600; font-size: 15px; 
-  cursor: pointer; height: 52px; flex: 1; transition: all 0.2s ease; 
+  border-radius: 100px; font-weight: 600; cursor: pointer; transition: all 0.2s ease; 
+  /* 웹 표준 크기 강제 적용 및 팽창 방지 */
+  height: 40px !important; 
+  padding: 0 20px !important; 
+  font-size: 14px !important;
+  display: inline-flex; align-items: center; justify-content: center; box-sizing: border-box;
+  flex: none !important; 
+  width: fit-content; 
 }
 .btn-secondary:hover { background-color: var(--card-hover); }
 
 .btn-submit { 
   background-color: var(--primary-bg); color: var(--primary-text); border: none; 
-  padding: 0 24px; border-radius: 100px; font-weight: 600; font-size: 15px; 
-  cursor: pointer; height: 52px; flex: 2; transition: all 0.2s ease; 
+  border-radius: 100px; font-weight: 600; cursor: pointer; transition: all 0.2s ease; 
+  /* 웹 표준 크기 강제 적용 및 팽창 방지 */
+  height: 40px !important; 
+  padding: 0 20px !important; 
+  font-size: 14px !important;
+  display: inline-flex; align-items: center; justify-content: center; box-sizing: border-box;
+  flex: none !important; 
+  width: fit-content; 
 }
 .btn-submit:hover:not(:disabled) { background-color: var(--primary-hover); transform: translateY(-2px); }
 .btn-submit:disabled { background-color: var(--btn-disabled); color: var(--text-disabled); cursor: not-allowed; transform: none; }
+
+/* 예외: 첫 로그인 화면처럼 의도적으로 꽉 채워야 하는 btn-group 내부에서만 팽창 허용 */
+.btn-group .btn-secondary { flex: 1 !important; width: auto; }
+.btn-group .btn-submit { flex: 2 !important; width: auto; }

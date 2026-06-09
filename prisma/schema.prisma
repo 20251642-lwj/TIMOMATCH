@@ -18,18 +18,17 @@ model universities {
 }
 
 model users {
-  id           String   @id @default(uuid())
-  github_id    String   @unique
-  name         String   
-  github_token String
-  role         String   @default("PENDING") 
-  created_at   DateTime @default(now())
+  id               String   @id @default(uuid())
+  github_id        String   @unique
+  name             String   
+  github_token     String
+  role             String   @default("PENDING") 
+  created_at       DateTime @default(now())
 
-  student_profile   student_profiles?
+  student_profile  student_profiles?
   professor_profile professor_profiles?
   
-  // [복구됨] 첫 번째 오류 해결: 이 유저가 생성한 프로젝트 목록 (1:N)
-  projects          projects[]
+  projects         projects[]
 }
 
 model student_profiles {
@@ -44,7 +43,6 @@ model student_profiles {
   user       users        @relation(fields: [user_id], references: [id], onDelete: Cascade)
   university universities @relation(fields: [university_id], references: [id], onDelete: Restrict)
 
-  // [복구됨] 두 번째 오류 해결: 이 학생이 수강 중인 과목 목록 다대다(N:M) 연결
   enrolled_classes classes[]  @relation("ClassEnrollments")
 
   @@unique([university_id, student_number])
@@ -63,15 +61,38 @@ model professor_profiles {
 }
 
 model projects {
-  id         String   @id @default(uuid())
-  title      String
-  github_url String
-  user_id    String
-  class_id   String? 
-  created_at DateTime @default(now())
+  id                String   @id @default(uuid())
+  title             String
+  github_url        String
+  project_goal      String?  @db.Text // [NEW] 학생이 설정한 프로젝트 목표
+  user_id           String
+  class_id          String? 
+  created_at        DateTime @default(now())
+
+  // AI 분석 데이터 캐싱 및 대시보드 렌더링 최적화 필드
+  ai_summary        String?  @db.Text
+  ai_evaluation     String?  @db.Text
+  last_analyzed_at  DateTime?
+  last_commit_count Int      @default(0)
 
   user       users    @relation(fields: [user_id], references: [id], onDelete: Cascade)
   class      classes? @relation(fields: [class_id], references: [id], onDelete: SetNull) 
+  
+  // 피드백 1:N 관계
+  feedbacks  feedbacks[]
+}
+
+// 교수-학생 양방향 상호작용 피드백 테이블
+model feedbacks {
+  id             String   @id @default(uuid())
+  project_id     String
+  content        String   @db.Text
+  student_reply  String?  @db.Text
+  status         String   @default("PENDING") // PENDING -> REPLIED -> RESOLVED
+  created_at     DateTime @default(now())
+  resolved_at    DateTime?
+
+  project        projects @relation(fields: [project_id], references: [id], onDelete: Cascade)
 }
 
 model classes {

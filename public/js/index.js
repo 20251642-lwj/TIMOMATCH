@@ -1,28 +1,11 @@
 // public/js/index.js
 
-// [수정됨] 토큰이 존재할 때 대시보드로 강제 이동시키는 window.onload 로직을 완전히 제거했습니다.
-
 // 1. UI 초기화 및 이벤트 리스너 바인딩
 document.addEventListener('DOMContentLoaded', () => {
+  // [수정됨] 테마 초기화 시 버튼 텍스트 동기화 (토글 로직 자체는 theme.js로 이관됨)
   const themeToggleBtn = document.getElementById('themeToggle');
-  
-  // 초기 테마 상태에 따른 버튼 텍스트 설정
   if (themeToggleBtn && document.body.classList.contains('dark-mode')) {
     themeToggleBtn.innerText = 'Light Mode';
-  }
-
-  // 테마 토글 이벤트 및 스토리지 저장
-  if (themeToggleBtn) {
-    themeToggleBtn.addEventListener('click', () => {
-      document.body.classList.toggle('dark-mode');
-      if (document.body.classList.contains('dark-mode')) {
-        themeToggleBtn.innerText = 'Light Mode';
-        localStorage.setItem('timo_theme', 'dark');
-      } else {
-        themeToggleBtn.innerText = 'Dark Mode';
-        localStorage.setItem('timo_theme', 'light');
-      }
-    });
   }
 
   // 타이핑 효과 시작

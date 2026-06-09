@@ -7,7 +7,9 @@ const authRoutes = require('./routes/auth.routes');
 const projectRoutes = require('./routes/project.routes');
 const classRoutes = require('./routes/class.routes');
 const enrollRoutes = require('./routes/enroll.routes');
-const profileRoutes = require('./routes/profile.routes'); // 경로 확인 필요
+const profileRoutes = require('./routes/profile.routes');
+const dashboardRoutes = require('./routes/dashboard.routes');
+const feedbackRoutes = require('./routes/feedback.routes');
 
 const app = express();
 
@@ -23,6 +25,8 @@ app.use('/api/projects', projectRoutes);
 app.use('/api/classes', classRoutes);
 app.use('/api/enroll', enrollRoutes);
 app.use('/api/profile', profileRoutes);
+app.use('/api/dashboard', dashboardRoutes);
+app.use('/api/feedbacks', feedbackRoutes);
 
 const PORT = process.env.PORT || 3000;
 

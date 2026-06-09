@@ -1,92 +1,12 @@
 const { PrismaClient } = require('@prisma/client');
 const jwt = require('jsonwebtoken');
+const crypto = require('crypto');
+const axios = require('axios');
+const { GoogleGenerativeAI } = require('@google/generative-ai');
 
 const prisma = new PrismaClient();
 
-exports.createProject = async (req, res) => {
-  const { title, github_url, class_id } = req.body;
-
-  if (!title || !github_url || !class_id) {
-    return res.status(400).json({ error: '프로젝트 이름, GitHub 레포지토리, 제출 대상 과목은 필수입니다.' });
-  }
-
-  const githubRegex = /^https:\/\/github\.com\/[a-zA-Z0-9-]+\/[a-zA-Z0-9_.-]+$/;
-  if (!githubRegex.test(github_url)) {
-    return res.status(400).json({ error: '올바른 GitHub 레포지토리 주소 형식이 아닙니다.' });
-  }
-
-  const authHeader = req.headers.authorization;
-  if (!authHeader || !authHeader.startsWith('Bearer ')) return res.status(401).json({ error: '인증 토큰 누락' });
-
-  try {
-    const token = authHeader.split(' ')[1];
-    const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    
-    if (decoded.role !== 'STUDENT') {
-      return res.status(403).json({ error: '프로젝트 제출은 학생 권한만 가능합니다.' });
-    }
-
-    // [NEW] 방어적 프로그래밍: 실제 수강 중인 과목인지 교차 검증
-    const studentProfile = await prisma.student_profiles.findUnique({
-      where: { user_id: decoded.userId },
-      include: { enrolled_classes: true }
-    });
-
-    if (!studentProfile) {
-      return res.status(404).json({ error: '학생 프로필을 찾을 수 없습니다.' });
-    }
-
-    const isEnrolled = studentProfile.enrolled_classes.some(c => c.id === class_id);
-    if (!isEnrolled) {
-      return res.status(403).json({ error: '본인이 수강 중인 과목에만 프로젝트를 제출할 수 있습니다.' });
-    }
-
-    const newProject = await prisma.projects.create({
-      data: {
-        title: title.trim(),
-        github_url: github_url.trim(),
-        user_id: decoded.userId, // 프로젝트는 스키마상 users 테이블을 직접 참조함
-        class_id: class_id 
-      }
-    });
-
-    return res.status(201).json(newProject);
-  } catch (error) {
-    console.error('Project Creation Error:', error.message);
-    return res.status(401).json({ error: '인증 및 처리 실패' });
-  }
-};
-
-exports.getProjects = async (req, res) => {
-  const authHeader = req.headers.authorization;
-  if (!authHeader || !authHeader.startsWith('Bearer ')) {
-    return res.status(401).json({ error: '인증 토큰이 누락되었습니다.' });
-  }
-
-  try {
-    const token = authHeader.split(' ')[1];
-    const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    
-    const userProjects = await prisma.projects.findMany({
-      where: { user_id: decoded.userId },
-      // [NEW] 프론트엔드에서 프로젝트 카드에 과목명을 바로 표시할 수 있도록 Join(include) 추가
-      include: { class: { select: { name: true } } },
-      orderBy: { created_at: 'desc' }
-    });
-
-    return res.status(200).json(userProjects);
-  } catch (error) {
-    console.error('Project Fetch Error:', error.message);
-    return res.status(401).json({ error: '데이터를 불러오는 중 오류가 발생했습니다.' });
-  }
-};
-
-// src/controllers/project.controller.js 하단에 추가
-
-const crypto = require('crypto');
-const axios = require('axios');
-
-// 토큰 복호화 유틸리티 함수
+// --- [공통 헬퍼 함수] ---
 function decryptGithubToken(encryptedToken) {
   const decipher = crypto.createDecipheriv(
     'aes-256-cbc',
@@ -98,14 +18,155 @@ function decryptGithubToken(encryptedToken) {
   return decrypted;
 }
 
-// GitHub URL 파싱 유틸리티 함수
 function parseGithubUrl(url) {
   const match = url.match(/github\.com\/([^/]+)\/([^/]+)/);
   if (!match) return null;
   return { owner: match[1], repo: match[2].replace('.git', '') };
 }
 
-// 특정 과목 내 프로젝트 목록 조회 (교수용)
+// 깃허브 데이터 페칭 및 가공 공통 로직
+async function getGithubMetricsData(project) {
+  if (!project || !project.user || !project.user.github_token) {
+    throw new Error('프로젝트 또는 깃허브 연동 정보가 없습니다.');
+  }
+
+  const decryptedToken = decryptGithubToken(project.user.github_token);
+  const repoInfo = parseGithubUrl(project.github_url);
+  if (!repoInfo) throw new Error('올바르지 않은 저장소 주소입니다.');
+
+  const authConfig = {
+    headers: { Authorization: `Bearer ${decryptedToken}`, Accept: 'application/vnd.github.v3+json' }
+  };
+
+  const [prRes, commitRes] = await Promise.all([
+    axios.get(`https://api.github.com/repos/${repoInfo.owner}/${repoInfo.repo}/pulls?state=all&per_page=30`, authConfig).catch(() => ({ data: [] })),
+    axios.get(`https://api.github.com/repos/${repoInfo.owner}/${repoInfo.repo}/commits?per_page=100`, authConfig).catch(() => ({ data: [] }))
+  ]);
+
+  const prs = prRes.data;
+  const commits = commitRes.data;
+
+  const totalPRs = prs.length;
+  const mergedPRs = prs.filter(pr => pr.merged_at !== null).length;
+  const openPRs = prs.filter(pr => pr.state === 'open').length;
+  const totalCommits = commits.length;
+
+  const timelineMap = new Map();
+
+  // [NEW] 1. 타임라인 시작일(제출일 or 첫 커밋일 중 빠른 날)과 종료일(오늘) 계산
+  let startDate = new Date(project.created_at);
+  commits.forEach(c => {
+    const cDate = new Date(c.commit.author.date);
+    if (cDate < startDate) startDate = cDate;
+  });
+
+  // [NEW] 2. startDate부터 오늘까지 모든 날짜를 순회하며 0으로 초기화
+  const today = new Date();
+  for (let d = new Date(startDate); d <= today; d.setDate(d.getDate() + 1)) {
+    const dateStr = d.toISOString().split('T')[0];
+    if (!timelineMap.has(dateStr)) {
+      timelineMap.set(dateStr, { commit: 0, pr: 0 });
+    }
+  }
+  
+  // 혹시 타임존(UTC -> KST) 차이로 오늘 날짜가 생성 안 될 경우를 대비해 오늘 날짜 명시적 추가
+  const todayStr = today.toISOString().split('T')[0];
+  if (!timelineMap.has(todayStr)) {
+    timelineMap.set(todayStr, { commit: 0, pr: 0 });
+  }
+
+  // 3. 실제 커밋과 PR 데이터를 덮어쓰며 카운트 증가
+  commits.forEach(c => {
+    const dateStr = new Date(c.commit.author.date).toISOString().split('T')[0];
+    // 극단적으로 과거의 예외 데이터가 있을 수 있으므로 방어 로직 추가
+    if (!timelineMap.has(dateStr)) timelineMap.set(dateStr, { commit: 0, pr: 0 });
+    timelineMap.get(dateStr).commit += 1;
+  });
+  prs.forEach(pr => {
+    const dateStr = new Date(pr.created_at).toISOString().split('T')[0];
+    if (!timelineMap.has(dateStr)) timelineMap.set(dateStr, { commit: 0, pr: 0 });
+    timelineMap.get(dateStr).pr += 1;
+  });
+
+  // 4. 날짜순 정렬
+  const timelineData = Array.from(timelineMap.entries())
+    .map(([date, counts]) => ({ date, commitCount: counts.commit, prCount: counts.pr }))
+    .sort((a, b) => new Date(a.date) - new Date(b.date));
+
+  const contributorMap = new Map();
+  commits.forEach(c => {
+    const authorLogin = c.author ? c.author.login : (c.commit.author ? c.commit.author.name : 'Unknown');
+    if (!contributorMap.has(authorLogin)) contributorMap.set(authorLogin, { login: authorLogin, commitCount: 0, prCount: 0 });
+    contributorMap.get(authorLogin).commitCount += 1;
+  });
+  prs.forEach(pr => {
+    const authorLogin = pr.user ? pr.user.login : 'Unknown';
+    if (contributorMap.has(authorLogin)) contributorMap.get(authorLogin).prCount += 1;
+  });
+
+  const contributorsArray = Array.from(contributorMap.values())
+    .map(c => ({
+      ...c,
+      commitPercentage: totalCommits > 0 ? Math.round((c.commitCount / totalCommits) * 100) : 0
+    }))
+    .sort((a, b) => b.commitCount - a.commitCount);
+
+  return {
+    metrics: { totalCommits, totalPRs, mergedPRs, openPRs },
+    contributors: contributorsArray,
+    timelineData,
+    rawPrs: prs.slice(0, 5).map(pr => ({ title: pr.title, state: pr.state, author: pr.user ? pr.user.login : 'Unknown', date: new Date(pr.created_at).toLocaleDateString('ko-KR') })),
+    geminiData: {
+      lightWeightPrs: prs.slice(0, 10).map(pr => ({ title: pr.title, state: pr.state, author: pr.user ? pr.user.login : 'Unknown' })),
+      lightWeightContributors: contributorsArray.map(c => ({ login: c.login, percent: c.commitPercentage })),
+      totalCommits,
+      totalPRs
+    }
+  };
+}
+
+
+// --- [API 엔드포인트 로직] ---
+
+exports.createProject = async (req, res) => {
+  const { title, github_url, class_id, project_goal } = req.body;
+  if (!title || !github_url || !class_id || !project_goal) return res.status(400).json({ error: '필수 항목 누락' });
+
+  const authHeader = req.headers.authorization;
+  if (!authHeader) return res.status(401).json({ error: '인증 토큰 누락' });
+
+  try {
+    const token = authHeader.split(' ')[1];
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    if (decoded.role !== 'STUDENT') return res.status(403).json({ error: '학생 권한만 가능합니다.' });
+
+    const newProject = await prisma.projects.create({
+      data: { title: title.trim(), github_url: github_url.trim(), project_goal: project_goal.trim(), user_id: decoded.userId, class_id: class_id }
+    });
+    return res.status(201).json(newProject);
+  } catch (error) {
+    return res.status(500).json({ error: '생성 실패' });
+  }
+};
+
+exports.getProjects = async (req, res) => {
+  const authHeader = req.headers.authorization;
+  if (!authHeader) return res.status(401).json({ error: '인증 토큰 누락' });
+
+  try {
+    const token = authHeader.split(' ')[1];
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    const userProjects = await prisma.projects.findMany({
+      where: { user_id: decoded.userId },
+      include: { class: { select: { name: true } } },
+      orderBy: { created_at: 'desc' }
+    });
+    return res.status(200).json(userProjects);
+  } catch (error) {
+    return res.status(500).json({ error: '조회 실패' });
+  }
+};
+
 exports.getClassProjects = async (req, res) => {
   const { classId } = req.params;
   const authHeader = req.headers.authorization;
@@ -114,22 +175,50 @@ exports.getClassProjects = async (req, res) => {
   try {
     const token = authHeader.split(' ')[1];
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    if (decoded.role !== 'PROFESSOR') return res.status(403).json({ error: '권한 없음' });
 
-    const projects = await prisma.projects.findMany({
-      where: { class_id: classId },
-      orderBy: { created_at: 'desc' }
-    });
-
-    return res.status(200).json(projects);
+    if (decoded.role === 'PROFESSOR') {
+      const projects = await prisma.projects.findMany({ where: { class_id: classId }, orderBy: { created_at: 'desc' } });
+      return res.status(200).json(projects);
+    } else if (decoded.role === 'STUDENT') {
+      const projects = await prisma.projects.findMany({ where: { class_id: classId, user_id: decoded.userId }, orderBy: { created_at: 'desc' } });
+      return res.status(200).json(projects);
+    } else {
+      return res.status(403).json({ error: '권한 없음' });
+    }
   } catch (error) {
     return res.status(500).json({ error: error.message });
   }
 };
 
-// src/controllers/project.controller.js (부분 수정)
+exports.getProjectReport = async (req, res) => {
+  const { id } = req.params;
+  const authHeader = req.headers.authorization;
+  if (!authHeader) return res.status(401).json({ error: '인증 토큰 누락' });
 
-// 실시간 PR 및 커밋 수집, AI 통합 리포트 생성 API
+  try {
+    const project = await prisma.projects.findUnique({ where: { id: id }, include: { user: true } });
+    if (!project) return res.status(404).json({ error: '프로젝트를 찾을 수 없습니다.' });
+
+    const ghData = await getGithubMetricsData(project);
+
+    return res.status(200).json({
+      projectTitle: project.title,
+      githubUrl: project.github_url,
+      projectGoal: project.project_goal,
+      metrics: ghData.metrics,
+      contributors: ghData.contributors,
+      timelineData: ghData.timelineData,
+      rawPrs: ghData.rawPrs,
+      analysis: {
+        summary: project.ai_summary || "아직 교수님이 AI 진단을 수행하지 않았습니다.",
+        evaluation: project.ai_evaluation || "평가 대기 중입니다."
+      }
+    });
+  } catch (error) {
+    return res.status(500).json({ error: error.message });
+  }
+};
+
 exports.analyzeProjectPRs = async (req, res) => {
   const { id } = req.params;
   const authHeader = req.headers.authorization;
@@ -138,128 +227,45 @@ exports.analyzeProjectPRs = async (req, res) => {
   try {
     const token = authHeader.split(' ')[1];
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    if (decoded.role !== 'PROFESSOR') return res.status(403).json({ error: '교수 계정만 분석 가능합니다.' });
+    if (decoded.role !== 'PROFESSOR') return res.status(403).json({ error: '교수 권한만 AI 재분석을 수행할 수 있습니다.' });
 
-    // 1. 프로젝트 및 토큰 정보 조회
-    const project = await prisma.projects.findUnique({
+    const { customPrompt } = req.body;
+    const project = await prisma.projects.findUnique({ where: { id: id }, include: { user: true } });
+    const ghData = await getGithubMetricsData(project);
+
+    if (!process.env.GEMINI_API_KEY) throw new Error('GEMINI_API_KEY 누락');
+    const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
+    const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
+
+    const studentGoal = project.project_goal ? `\n\n[학생이 설정한 프로젝트 목표]\n"${project.project_goal}"\n위 목표를 달성하기 위해 현재의 커밋/PR 협업 지표가 적절한지 평가에 반드시 반영하십시오.` : "";
+    const professorRequirement = customPrompt ? `\n\n[교수님 특별 요청사항]\n"${customPrompt}"` : "";
+
+    const prompt = `당신은 대학교 컴퓨터공학 교수를 보조하는 AI 조교입니다. 학생 팀 프로젝트의 GitHub 데이터를 객관적으로 평가하십시오.${studentGoal}${professorRequirement}\n[데이터]\n커밋수:${ghData.geminiData.totalCommits}, PR수:${ghData.geminiData.totalPRs}\n팀원비중:${JSON.stringify(ghData.geminiData.lightWeightContributors)}\n최근PR:${JSON.stringify(ghData.geminiData.lightWeightPrs)}\n\n[요구사항]\n1. 'summary': 정량적 진행 요약 (1문장)\n2. 'evaluation': 학생의 목표 달성 여부 및 협업/품질 상태 분석 (2문장)\n반드시 {"summary": "요약", "evaluation": "평가"} JSON 형태로만 응답하십시오.`;
+
+    const result = await model.generateContent(prompt);
+    const cleanJsonStr = result.response.text().trim().replace(/```json/gi, '').replace(/```/g, '').trim();
+    const aiAnalysis = JSON.parse(cleanJsonStr);
+
+    const summaryMessage = aiAnalysis.summary || "AI 요약 실패";
+    const evalMessage = aiAnalysis.evaluation || "AI 평가 실패";
+
+    await prisma.projects.update({
       where: { id: id },
-      include: { user: true }
+      data: { ai_summary: summaryMessage, ai_evaluation: evalMessage, last_analyzed_at: new Date(), last_commit_count: ghData.geminiData.totalCommits }
     });
-
-    if (!project || !project.user || !project.user.github_token) {
-      return res.status(400).json({ error: '프로젝트 또는 깃허브 연동 정보가 없습니다.' });
-    }
-
-    const decryptedToken = decryptGithubToken(project.user.github_token);
-    const repoInfo = parseGithubUrl(project.github_url);
-    if (!repoInfo) return res.status(400).json({ error: '올바르지 않은 저장소 주소입니다.' });
-
-    const authConfig = {
-      headers: { Authorization: `Bearer ${decryptedToken}`, Accept: 'application/vnd.github.v3+json' }
-    };
-
-    // 2. PR 데이터와 커밋 데이터를 병렬로 수집 (속도 최적화)
-    const [prRes, commitRes] = await Promise.all([
-      axios.get(`https://api.github.com/repos/${repoInfo.owner}/${repoInfo.repo}/pulls?state=all&per_page=30`, authConfig).catch(() => ({ data: [] })),
-      axios.get(`https://api.github.com/repos/${repoInfo.owner}/${repoInfo.repo}/commits?per_page=100`, authConfig).catch(() => ({ data: [] }))
-    ]);
-
-    const prs = prRes.data;
-    const commits = commitRes.data;
-
-    // 3. 정량 데이터 가공 (메트릭 산출)
-    const totalPRs = prs.length;
-    const mergedPRs = prs.filter(pr => pr.merged_at !== null).length;
-    const openPRs = prs.filter(pr => pr.state === 'open').length;
-    const closedPRs = totalPRs - mergedPRs - openPRs;
-    const totalCommits = commits.length;
-
-    // 4. 팀원별 기여도(커밋 비중) 분석 알고리즘
-    const contributorMap = new Map();
-    
-    commits.forEach(c => {
-      // 작성자 정보가 없는 커밋(로컬 설정 누락 등) 방어
-      const authorLogin = c.author ? c.author.login : (c.commit.author ? c.commit.author.name : 'Unknown');
-      
-      if (!contributorMap.has(authorLogin)) {
-        contributorMap.set(authorLogin, { login: authorLogin, commitCount: 0, prCount: 0 });
-      }
-      contributorMap.get(authorLogin).commitCount += 1;
-    });
-
-    prs.forEach(pr => {
-      const authorLogin = pr.user ? pr.user.login : 'Unknown';
-      if (contributorMap.has(authorLogin)) {
-        contributorMap.get(authorLogin).prCount += 1;
-      }
-    });
-
-    const contributorsArray = Array.from(contributorMap.values())
-      .map(c => ({
-        ...c,
-        commitPercentage: totalCommits > 0 ? Math.round((c.commitCount / totalCommits) * 100) : 0
-      }))
-      .sort((a, b) => b.commitCount - a.commitCount); // 커밋 수 내림차순 정렬
-
-    // 5. 스마트 평가 멘트 생성 (스마트 폴백 로직 탑재)
-    let summaryMessage = `${project.title} 프로젝트는 현재까지 총 ${totalCommits}개의 커밋과 ${totalPRs}개의 PR을 기록했습니다. `;
-    let evalMessage = "";
-    
-    // 지니 계수(불평등 지수) 간이 적용: 1위 기여자의 비중 확인
-    const topContributorShare = contributorsArray.length > 0 ? contributorsArray[0].commitPercentage : 0;
-    const isImbalanced = contributorsArray.length > 1 && topContributorShare > 70; // 1명이 70% 이상 독식
-
-    if (totalPRs === 0) {
-      // PR 0개 상황: Direct Commit 폴백
-      if (totalCommits > 0) {
-        summaryMessage += "안정적인 커밋 이력이 존재하나, 코드 리뷰(PR) 절차 없이 메인 브랜치에 직접 병합(Direct Commit)하고 있습니다.";
-        if (isImbalanced) {
-          evalMessage = `[경고] PR 절차 누락 및 작업 불균형. '${contributorsArray[0].login}' 학생에게 커밋 부하가 ${topContributorShare}% 집중되어 있습니다. 팀워크 개선이 시급합니다.`;
-        } else {
-          evalMessage = "팀원 간 커밋 기여도는 비교적 균등하나, 협업 프로세스 정립을 위해 Pull Request 기반의 브랜치 전략 도입을 권장합니다.";
-        }
-      } else {
-        summaryMessage += "유효한 개발 데이터가 없습니다.";
-        evalMessage = "형상 관리가 전혀 이루어지지 않고 있습니다.";
-      }
-    } else {
-      // PR 존재 상황
-      const mergeRate = Math.round((mergedPRs / totalPRs) * 100);
-      summaryMessage += `메인 코드 병합률은 ${mergeRate}%입니다.`;
-      
-      if (isImbalanced) {
-        evalMessage = `PR 절차를 활용하고 있으나, 특정 인원('${contributorsArray[0].login}')의 기여도가 비정상적으로 높습니다(${topContributorShare}%). 코드 리뷰는 원활한지, 작업 분배가 적절한지 확인이 필요합니다.`;
-      } else if (mergeRate >= 70) {
-        evalMessage = "팀원 간 작업 분배가 안정적이며, 활발한 코드 교류와 리뷰(PR)를 통해 성공적인 협업을 수행하고 있습니다. 훌륭합니다.";
-      } else {
-        evalMessage = "정상적인 협업 프로세스를 따르고 있으나, 병합(Merge)되지 못하고 방치되거나 거절된 PR 비중이 높습니다. 의사소통 강화를 권장합니다.";
-      }
-    }
 
     return res.status(200).json({
       projectTitle: project.title,
       githubUrl: project.github_url,
-      metrics: {
-        totalCommits: totalCommits,
-        totalPRs: totalPRs,
-        mergedPRs: mergedPRs,
-        openPRs: openPRs
-      },
-      contributors: contributorsArray, // 프론트엔드에서 렌더링할 팀원 통계 배열
-      analysis: {
-        summary: summaryMessage,
-        evaluation: evalMessage
-      },
-      rawPrs: prs.slice(0, 5).map(pr => ({
-        title: pr.title,
-        state: pr.state,
-        author: pr.user.login,
-        date: new Date(pr.created_at).toLocaleDateString('ko-KR')
-      }))
+      projectGoal: project.project_goal,
+      metrics: ghData.metrics,
+      contributors: ghData.contributors,
+      timelineData: ghData.timelineData,
+      rawPrs: ghData.rawPrs,
+      analysis: { summary: summaryMessage, evaluation: evalMessage }
     });
 
   } catch (error) {
-    console.error('Realtime Analysis Error:', error.message);
     return res.status(500).json({ error: error.message });
   }
 };

@@ -1,3 +1,5 @@
+/* public/css/index.css */
+
 /* 다크 모드와 라이트 모드 컬러 변수 정의 */
 :root {
   --bg-color: #F0F5FA;
@@ -149,10 +151,15 @@ body {
 .snippet .function { color: var(--code-function); }
 .snippet .comment { color: var(--code-comment); font-style: italic; }
 
+/* [핵심 변경 포인트] 음수 애니메이션 딜레이 적용
+  처음 페이지 로드 시 빈 화면이 되지 않고, 이미 진행 중인 것처럼 여러 위치에 분산되어 렌더링되게 만듭니다.
+*/
 .snippet-1 { left: 8%; bottom: -15%; animation-delay: 0s; }
-.snippet-2 { left: 75%; bottom: -20%; animation-delay: 4s; }
-.snippet-3 { left: 15%; bottom: -25%; animation-delay: 9s; }
-.snippet-4 { left: 65%; bottom: -10%; animation-delay: 14s; }
+.snippet-2 { left: 75%; bottom: -20%; animation-delay: -3s; }
+.snippet-3 { left: 15%; bottom: -25%; animation-delay: -6s; }
+.snippet-4 { left: 65%; bottom: -10%; animation-delay: -9s; }
+.snippet-5 { left: 30%; bottom: -20%; animation-delay: -12s; }
+.snippet-6 { left: 82%; bottom: -12%; animation-delay: -15s; }
 
 @keyframes floatUp {
   0% { transform: translateY(0) rotate(-1deg); opacity: 0; }

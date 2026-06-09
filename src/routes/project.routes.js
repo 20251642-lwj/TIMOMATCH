@@ -1,17 +1,15 @@
-// src/routes/project.routes.js
-
 const express = require('express');
 const router = express.Router();
 const projectController = require('../controllers/project.controller');
 
-// [유지] 기존에 작성해두신 라우트 무결성 보존
 router.post('/', projectController.createProject);
 router.get('/', projectController.getProjects); 
-
-// [신규 추가] 특정 과목에 제출된 프로젝트 리스트 조회 (교수용)
 router.get('/class/:classId', projectController.getClassProjects);
 
-// [신규 추가] 실시간 GitHub 수집 및 AI 분석 엔진 실행
+// [NEW] 리포트 페이지 로드 시 사용하는 읽기 전용 API
+router.get('/:id/report', projectController.getProjectReport);
+
+// 교수님이 명시적으로 버튼을 눌렀을 때만 호출되는 AI 강제 갱신 API
 router.post('/:id/analyze', projectController.analyzeProjectPRs);
 
 module.exports = router;
