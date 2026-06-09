@@ -54,7 +54,7 @@ function injectGlobalNavigationBar(role) {
   const basePath = window.location.pathname;
 
   let menuHtml = `
-    <div class="gnb-header">TIMO Match</div>
+    <div class="gnb-header">PRsim</div>
     <ul class="gnb-menu">
       <li class="${basePath.includes('dashboard') ? 'active' : ''}">
         <a href="/dashboard.html">대시보드 홈</a>
