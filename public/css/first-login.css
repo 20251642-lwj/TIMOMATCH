@@ -149,3 +149,16 @@ p { font-size: 14px; color: var(--text-secondary); margin: 0 0 36px 0; line-heig
 /* 예외: 첫 로그인 화면처럼 의도적으로 꽉 채워야 하는 btn-group 내부에서만 팽창 허용 */
 .btn-group .btn-secondary { flex: 1 !important; width: auto; }
 .btn-group .btn-submit { flex: 2 !important; width: auto; }
+
+/* 드롭다운(Select/Option) 가시성 렌더링 충돌 강제 방지 */
+select.prompt-textarea, 
+select.prompt-textarea option {
+  background-color: var(--bg-color) !important;
+  color: var(--text-primary) !important;
+}
+
+select.prompt-textarea:focus {
+  outline: none;
+  border-color: var(--primary-bg) !important;
+  box-shadow: 0 0 0 2px var(--primary-container) !important;
+}

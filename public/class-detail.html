@@ -12,9 +12,9 @@
   
   <div id="submitProjectModal" class="modal-backdrop" style="display: none;">
     <div class="prompt-modal">
-      <h2 style="margin:0 0 8px 0; font-size:20px; font-weight:800; color:var(--text-primary);">프로젝트 제출</h2>
+      <h2 style="margin:0 0 8px 0; font-size:20px; font-weight:800; color:var(--text-primary);">새 프로젝트 팀 개설</h2>
       <p style="font-size:13px; color:var(--text-secondary); margin-bottom:24px; line-height:1.5;">
-        이 과목에서 평가받을 깃허브 레포지토리와 목표를 설정하세요.
+        새로운 프로젝트를 생성하고 팀장(LEADER) 권한을 부여받습니다.
       </p>
       <div class="input-group" style="margin-bottom: 16px;">
         <label>프로젝트 이름</label>
@@ -30,7 +30,24 @@
       </div>
       <div style="display: flex; gap: 12px; justify-content: flex-end;">
         <button class="btn-secondary" onclick="closeSubmitModal()" style="height:44px; padding:0 20px;">취소</button>
-        <button class="btn-submit" onclick="submitNewProject()" style="height:44px; padding:0 24px; flex:none;">제출하기</button>
+        <button class="btn-submit" onclick="submitNewProject()" style="height:44px; padding:0 24px; flex:none;">개설하기</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="joinProjectModal" class="modal-backdrop" style="display: none;">
+    <div class="prompt-modal">
+      <h2 style="margin:0 0 8px 0; font-size:20px; font-weight:800; color:var(--text-primary);">기존 프로젝트 팀 합류</h2>
+      <p style="font-size:13px; color:var(--text-secondary); margin-bottom:24px; line-height:1.5;">
+        현재 과목에 개설된 프로젝트 팀 목록입니다. 본인의 팀을 선택하여 합류하세요.
+      </p>
+      <div class="input-group" style="margin-bottom: 24px;">
+        <label>프로젝트 팀 선택</label>
+        <select id="joinProjectSelect" class="prompt-textarea" style="width: 100%; height: 44px; padding: 0 12px; border: 1px solid var(--card-border); border-radius: 8px; box-sizing: border-box; cursor: pointer;"></select>
+      </div>
+      <div style="display: flex; gap: 12px; justify-content: flex-end;">
+        <button class="btn-secondary" onclick="closeJoinModal()" style="height:44px; padding:0 20px;">취소</button>
+        <button class="btn-submit" onclick="submitJoinProject()" style="height:44px; padding:0 24px; flex:none;">합류하기</button>
       </div>
     </div>
   </div>

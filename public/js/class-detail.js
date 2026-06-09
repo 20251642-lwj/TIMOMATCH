@@ -1,10 +1,26 @@
 let currentClassId = null;
 let currentUserRole = null;
 let targetProjectId = null;
-let selectedCategories = new Set(); 
+let selectedCategories = new Set();
+let currentUserId = null;
+
+// JWT 토큰에서 안전하게 userId 추출
+function getUserIdFromToken() {
+  try {
+    const token = localStorage.getItem('timo_jwt');
+    if (!token) return null;
+    const base64Url = token.split('.')[1];
+    const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+    const jsonPayload = decodeURIComponent(atob(base64).split('').map(function(c) {
+        return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
+    }).join(''));
+    return JSON.parse(jsonPayload).userId;
+  } catch(e) { return null; }
+}
 
 function initPage(payload) {
   currentUserRole = payload.role;
+  currentUserId = payload.userId || getUserIdFromToken();
   const urlParams = new URLSearchParams(window.location.search);
   currentClassId = urlParams.get('classId');
 
@@ -59,12 +75,16 @@ function renderProfessorView(projects, container) {
       : `<p style="margin: 16px 0 0 0; font-size:13px; color:var(--text-disabled);">아직 진행된 AI 분석이 없습니다.</p>`;
 
     const btnText = hasAiData ? 'AI 재분석 수행' : '실시간 AI 최초 분석';
+    const membersList = p.members && p.members.length > 0
+        ? p.members.map(m => m.user.name + (m.role === 'LEADER' ? '(팀장)' : '')).join(', ')
+        : '없음';
 
     return `
       <div class="list-item" style="padding: 24px; display: flex; flex-direction: column; align-items: stretch;">
         <div style="display: flex; justify-content: space-between; align-items: flex-start;">
           <div>
             <strong style="font-size:18px; display:block; margin-bottom:6px; cursor:pointer;" onclick="location.href='/report.html?projectId=${p.id}'">${p.title}</strong>
+            <div style="font-size:13px; color:var(--text-secondary); margin-bottom: 8px;">소속 학생: ${membersList}</div>
             <a href="${p.github_url}" target="_blank" style="font-size:13px; color:var(--primary-bg); text-decoration:none; font-weight:600;">${p.github_url}</a>
           </div>
           <button class="btn-submit" onclick="triggerLiveAnalysis('${p.id}')" style="height:44px; padding:0 20px; font-size:13px; font-weight:700; width:auto;">${btnText}</button>
@@ -78,45 +98,57 @@ function renderProfessorView(projects, container) {
 function renderStudentView(projects, container) {
   document.getElementById('classTitle').innerText = '내 프로젝트 관리';
   
-  // 학생이 이 과목에 아직 프로젝트를 제출하지 않은 경우
-  if (projects.length === 0) {
+  // 1. 내가 속한 프로젝트 검색 (LEADER 또는 MEMBER)
+  const myProject = projects.find(p => p.members && p.members.some(m => m.user_id === currentUserId));
+
+  if (!myProject) {
+    // 2. 미제출 상태 (팀장 개설 or 팀원 합류 선택)
+    let joinBtnHtml = '';
+    if (projects.length > 0) {
+      joinBtnHtml = `<button class="btn-secondary" onclick="openJoinModal()" style="height:48px; padding:0 32px; font-size:15px; width:auto; margin-left: 12px;">기존 팀에 합류하기</button>`;
+    }
+
     container.innerHTML = `
       <div class="section-card" style="text-align:center; padding:48px 24px; background:var(--glass-bg);">
-        <div style="font-size:48px; margin-bottom:16px;">🚀</div>
-        <h3 style="margin-bottom:8px;">아직 프로젝트를 제출하지 않으셨습니다.</h3>
-        <p style="color:var(--text-secondary); margin-bottom:24px;">이 과목에서 평가받을 팀 프로젝트 깃허브 저장소를 연동해주세요.</p>
-        <button class="btn-submit" onclick="openSubmitModal()" style="height:48px; padding:0 32px; font-size:15px; width:auto;">+ 새 프로젝트 제출하기</button>
+        <h3 style="margin-bottom:8px;">아직 소속된 프로젝트 팀이 없습니다.</h3>
+        <p style="color:var(--text-secondary); margin-bottom:24px;">새로운 팀을 개설하거나, 이미 만들어진 팀에 합류하세요.</p>
+        <div style="display: flex; justify-content: center;">
+          <button class="btn-submit" onclick="openSubmitModal()" style="height:48px; padding:0 32px; font-size:15px; width:auto;">+ 새 팀 개설 (팀장)</button>
+          ${joinBtnHtml}
+        </div>
       </div>
     `;
     return;
   }
 
-  // 학생이 이미 제출한 경우
-  const p = projects[0];
-  const hasAiData = !!p.ai_summary;
+  // 3. 소속된 프로젝트가 있는 경우 상세 현황 노출
+  const hasAiData = !!myProject.ai_summary;
   const summaryContent = hasAiData
     ? `<div style="margin-top: 16px; padding: 16px; background: rgba(33, 0, 93, 0.04); border-radius: 8px; border: 1px solid var(--primary-container);">
          <strong style="font-size:13px; color:var(--primary-bg); display:block; margin-bottom:8px;">[최근 AI 요약]</strong>
-         <p style="margin:0; font-size:14px; color:var(--text-primary); line-height:1.6;">${p.ai_summary}</p>
+         <p style="margin:0; font-size:14px; color:var(--text-primary); line-height:1.6;">${myProject.ai_summary}</p>
        </div>`
     : `<p style="margin: 16px 0 0 0; font-size:13px; color:var(--text-disabled);">아직 교수님이 AI 진단을 수행하지 않았습니다.</p>`;
+
+  const membersList = myProject.members.map(m => m.user.name + (m.role === 'LEADER' ? '(팀장)' : '')).join(', ');
 
   container.innerHTML = `
     <div class="list-item" style="padding: 24px; display: flex; flex-direction: column; align-items: stretch; border-color:var(--card-border-selected);">
       <div style="display: flex; justify-content: space-between; align-items: flex-start;">
         <div>
-          <span class="class-badge" style="margin-bottom:8px;">제출 완료</span>
-          <strong style="font-size:18px; display:block; margin-bottom:6px;">${p.title}</strong>
-          <a href="${p.github_url}" target="_blank" style="font-size:13px; color:var(--primary-bg); text-decoration:none; font-weight:600;">${p.github_url}</a>
+          <span class="class-badge" style="margin-bottom:8px;">소속 완료</span>
+          <strong style="font-size:18px; display:block; margin-bottom:6px;">${myProject.title}</strong>
+          <div style="font-size:13px; color:var(--text-secondary); margin-bottom: 8px;">팀원: ${membersList}</div>
+          <a href="${myProject.github_url}" target="_blank" style="font-size:13px; color:var(--primary-bg); text-decoration:none; font-weight:600;">${myProject.github_url}</a>
         </div>
-        <button class="btn-submit" onclick="location.href='/report.html?projectId=${p.id}'" style="height:44px; padding:0 20px; font-size:13px; font-weight:700; width:auto;">상세 리포트 보러가기</button>
+        <button class="btn-submit" onclick="location.href='/report.html?projectId=${myProject.id}'" style="height:44px; padding:0 20px; font-size:13px; font-weight:700; width:auto;">상세 리포트 보러가기</button>
       </div>
       ${summaryContent}
     </div>
   `;
 }
 
-// --- [학생 전용] 프로젝트 제출 모달 로직 ---
+// --- [학생 전용] 팀장 프로젝트 개설 로직 ---
 function openSubmitModal() {
   document.getElementById('submitTitle').value = '';
   document.getElementById('submitGithubUrl').value = '';
@@ -142,15 +174,56 @@ function submitNewProject() {
   fetch('/api/projects', {
     method: 'POST',
     headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
-    // URL에 있는 현재 과목 ID를 자동으로 주입
     body: JSON.stringify({ title, github_url, class_id: currentClassId, project_goal })
   })
   .then(async res => {
     const data = await res.json();
-    if (!res.ok) throw new Error(data.error || '프로젝트 제출에 실패했습니다.');
-    alert('프로젝트가 성공적으로 제출되었습니다!');
+    if (!res.ok) throw new Error(data.error || '프로젝트 생성에 실패했습니다.');
+    alert('프로젝트 팀이 성공적으로 개설되었습니다!');
     closeSubmitModal();
     fetchClassProjects(); 
+  })
+  .catch(err => alert(`오류: ${err.message}`));
+}
+
+// --- [학생 전용] 팀원 합류 로직 ---
+function openJoinModal() {
+  const token = localStorage.getItem('timo_jwt');
+  fetch(`/api/projects/class/${currentClassId}`, {
+    headers: { 'Authorization': `Bearer ${token}` }
+  })
+  .then(res => res.json())
+  .then(projects => {
+    const select = document.getElementById('joinProjectSelect');
+    select.innerHTML = '<option value="">-- 합류할 팀을 선택하세요 --</option>' + 
+      projects.map(p => {
+        const leader = p.members.find(m => m.role === 'LEADER');
+        const leaderName = leader && leader.user ? leader.user.name : '알 수 없음';
+        return `<option value="${p.id}">${p.title} (개설자: ${leaderName})</option>`;
+      }).join('');
+    document.getElementById('joinProjectModal').style.display = 'flex';
+  });
+}
+
+function closeJoinModal() {
+  document.getElementById('joinProjectModal').style.display = 'none';
+}
+
+function submitJoinProject() {
+  const projectId = document.getElementById('joinProjectSelect').value;
+  if (!projectId) return alert('합류할 프로젝트 팀을 선택해주세요.');
+
+  const token = localStorage.getItem('timo_jwt');
+  fetch(`/api/projects/${projectId}/join`, {
+    method: 'POST',
+    headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' }
+  })
+  .then(async res => {
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || '합류에 실패했습니다.');
+    alert('프로젝트 팀에 성공적으로 합류했습니다!');
+    closeJoinModal();
+    fetchClassProjects();
   })
   .catch(err => alert(`오류: ${err.message}`));
 }

@@ -18,17 +18,18 @@ model universities {
 }
 
 model users {
-  id               String   @id @default(uuid())
-  github_id        String   @unique
-  name             String   
-  github_token     String
-  role             String   @default("PENDING") 
-  created_at       DateTime @default(now())
+  id                String   @id @default(uuid())
+  github_id         String   @unique
+  name              String   
+  github_token      String
+  role              String   @default("PENDING") 
+  created_at        DateTime @default(now())
 
-  student_profile  student_profiles?
+  student_profile   student_profiles?
   professor_profile professor_profiles?
   
-  projects         projects[]
+  // [수정됨] 단일 projects 관계에서 N:M 멤버십 관계로 변경
+  project_members   project_members[]
 }
 
 model student_profiles {
@@ -60,12 +61,26 @@ model professor_profiles {
   managed_classes  classes[]    @relation("ProfessorToClasses")
 }
 
+// [NEW] 팀 기반 아키텍처를 위한 프로젝트-유저 N:M 매핑 테이블
+model project_members {
+  id         String   @id @default(uuid())
+  project_id String
+  user_id    String
+  role       String   @default("MEMBER") // "LEADER"(개설자) 또는 "MEMBER"(합류자)
+  joined_at  DateTime @default(now())
+
+  project projects @relation(fields: [project_id], references: [id], onDelete: Cascade)
+  user    users    @relation(fields: [user_id], references: [id], onDelete: Cascade)
+
+  // 한 유저가 같은 프로젝트에 중복 합류하는 것을 데이터베이스 단에서 원천 차단
+  @@unique([project_id, user_id])
+}
+
 model projects {
   id                String   @id @default(uuid())
   title             String
   github_url        String
-  project_goal      String?  @db.Text // [NEW] 학생이 설정한 프로젝트 목표
-  user_id           String
+  project_goal      String?  @db.Text
   class_id          String? 
   created_at        DateTime @default(now())
 
@@ -75,20 +90,19 @@ model projects {
   last_analyzed_at  DateTime?
   last_commit_count Int      @default(0)
 
-  user       users    @relation(fields: [user_id], references: [id], onDelete: Cascade)
-  class      classes? @relation(fields: [class_id], references: [id], onDelete: SetNull) 
+  // [수정됨] 기존의 user_id 의존성을 제거하고 다수 멤버십 참조
+  members   project_members[]
+  class     classes? @relation(fields: [class_id], references: [id], onDelete: SetNull) 
   
-  // 피드백 1:N 관계
-  feedbacks  feedbacks[]
+  feedbacks feedbacks[]
 }
 
-// 교수-학생 양방향 상호작용 피드백 테이블
 model feedbacks {
   id             String   @id @default(uuid())
   project_id     String
   content        String   @db.Text
   student_reply  String?  @db.Text
-  status         String   @default("PENDING") // PENDING -> REPLIED -> RESOLVED
+  status         String   @default("PENDING")
   created_at     DateTime @default(now())
   resolved_at    DateTime?
 

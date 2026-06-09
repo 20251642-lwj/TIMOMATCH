@@ -68,11 +68,10 @@ function renderStudentDashboard(data, container) {
     
     data.classes.forEach(c => {
       const myProject = data.projects ? data.projects.find(p => p.class_id === c.id) : null;
-      // [핵심 변경] 제출 여부와 관계없이 무조건 과목방으로 입장
       const clickAction = `location.href='/class-detail.html?classId=${c.id}'`;
         
       const statusColor = myProject ? 'var(--primary-bg)' : 'var(--text-disabled)';
-      const statusText = myProject ? '제출 완료 (상세 보기 →)' : '미제출 (입장하여 제출하기)';
+      const statusText = myProject ? '팀 소속 완료 (상세 보기 →)' : '팀 미배정 (입장하여 합류하기)';
 
       html += `
         <div class="list-item" style="padding: 24px; cursor: pointer; transition: all 0.2s ease; display: flex; flex-direction: column; justify-content: space-between; aspect-ratio: 4/3;" 
@@ -91,12 +90,18 @@ function renderStudentDashboard(data, container) {
   }
   html += '</div>';
 
-  html += '<div class="section-card" style="margin-top:24px;"><h3>내 프로젝트 현황 요약</h3>';
+  html += '<div class="section-card" style="margin-top:24px;"><h3>내 프로젝트 팀 현황 요약</h3>';
   if (!data.projects || data.projects.length === 0) {
-    html += '<p style="color:var(--text-secondary); font-size:14px;">제출한 프로젝트가 없습니다.</p>';
+    html += '<p style="color:var(--text-secondary); font-size:14px;">소속된 프로젝트 팀이 없습니다.</p>';
   } else {
     html += '<div class="list-grid">' + data.projects.map(p => {
       const className = p.class ? p.class.name : '지정되지 않음';
+      
+      // [NEW] 팀원 정보 문자열 추출
+      const membersList = p.members && p.members.length > 0
+        ? p.members.map(m => m.user.name + (m.role === 'LEADER' ? '(팀장)' : '')).join(', ')
+        : '소속 팀원 없음';
+
       const hasAiData = !!p.ai_summary;
       const summaryContent = hasAiData
         ? `<div style="margin-top: 16px; padding: 16px; background: rgba(33, 0, 93, 0.04); border-radius: 8px; border: 1px solid var(--primary-container);">
@@ -111,6 +116,7 @@ function renderStudentDashboard(data, container) {
             <div>
               <span class="class-badge" style="margin-bottom:8px;">${className}</span>
               <strong style="font-size:18px; display:block; margin-bottom:6px;">${p.title}</strong>
+              <div style="font-size:13px; color:var(--text-secondary); margin-bottom: 8px;">팀원: ${membersList}</div>
               <a href="${p.github_url}" target="_blank" style="font-size:13px; color:var(--primary-bg); text-decoration:none; font-weight:600;">${p.github_url}</a>
             </div>
             <button class="btn-submit" onclick="location.href='/report.html?projectId=${p.id}'" style="height:44px; padding:0 20px; font-size:13px; font-weight:700; width:auto;">상세 리포트 보기</button>
